@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -64,7 +65,6 @@ class BuenasPracticasApp extends StatelessWidget {
   }
 }
 
-///  HOME CON NAVEGACIÓN Y PNJ FLOTANTE
 class HomeScreen extends StatefulWidget {
   final String userId;
   const HomeScreen({required this.userId, Key? key}) : super(key: key);
@@ -75,27 +75,24 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _index = 0;
-  bool _showPNJ = true; // estado del PNJ
+  bool _showPNJ = true;
 
   @override
   void initState() {
     super.initState();
-    ();
+    _loadPNJState();
   }
 
   Future<void> _loadPNJState() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _showPNJ = prefs.getBool("show_pnj") ?? true; // aparece por defecto
+      _showPNJ = prefs.getBool("show_pnj") ?? true;
     });
   }
 
   void _hidePNJ() {
-    setState(() {
-      _showPNJ = false; // Ocultar solo en esta sesión
-    });
+    setState(() => _showPNJ = false);
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -108,53 +105,98 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
     return Scaffold(
+      extendBody: true,
+
       body: Stack(
         children: [
-          // Fondo tipo Shibuya
+
+          /// 🔥 NEON CYBERPUNK BACKGROUND
           Container(
             decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/background_shibuya.png'),
-                fit: BoxFit.cover,
-                colorFilter: ColorFilter.mode(
-                  Colors.black54,
-                  BlendMode.darken,
-                ),
+              gradient: RadialGradient(
+                radius: 1.2,
+                colors: [
+                  Color(0xFF0A0017), // oscuro profundo
+                  Color(0xFF12002A), // púrpura suave
+                  Color(0xFF00101A), // azul muy oscuro
+                ],
+                center: Alignment(0.4, -0.4),
               ),
             ),
           ),
 
-          // Pantalla actual
+          /// 🌐 Glow sutil alrededor (como neblina neon)
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.cyan.withOpacity(0.06),
+                  Colors.purple.withOpacity(0.06),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+
+          /// Pantalla actual
           screens[_index],
 
-          // PNJ flotante con botón para cerrar
+
+          /// 🤖 PNJ flotante con glow neon
           if (_showPNJ)
             Positioned(
-              right: 12,
-              bottom: 80,
+              right: 20,
+              bottom: 100,
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  PNJAssistant(
-                    assetPath: 'assets/assistant/pnj.png',
+                  GestureDetector(
                     onTap: () => setState(() => _index = 4),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.cyanAccent.withOpacity(0.5),
+                            blurRadius: 25,
+                            spreadRadius: 3,
+                          ),
+                        ],
+                      ),
+                      child: Image.asset(
+                        'assets/assistant/pnj.png',
+                        height: 95,
+                      ),
+                    ),
                   ),
 
-                  //  Botón para cerrar
+                  /// ❌ Botón cerrar estilo neon minimal
                   Positioned(
-                    right: -6,
-                    top: -6,
+                    right: -5,
+                    top: -5,
                     child: GestureDetector(
                       onTap: _hidePNJ,
                       child: Container(
+                        padding: const EdgeInsets.all(3),
                         decoration: BoxDecoration(
-                          color: Colors.black87,
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 1),
+                          color: Colors.black87,
+                          border: Border.all(
+                            color: Colors.cyanAccent,
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.cyanAccent.withOpacity(0.6),
+                              blurRadius: 10,
+                            )
+                          ],
                         ),
-                        padding: const EdgeInsets.all(4),
                         child: const Icon(Icons.close,
-                            size: 16, color: Colors.white),
+                            size: 14, color: Colors.white),
                       ),
                     ),
                   ),
@@ -164,32 +206,78 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
 
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _index,
-        onTap: (i) => setState(() => _index = i),
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.black.withOpacity(0.85),
-        selectedItemColor: const Color(0xFF00FFFF),
-        unselectedItemColor: Colors.white70,
-        selectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 13,
+      /// 🟦 NAVBAR estilo GLASS NEON CYBERPUNK
+      bottomNavigationBar: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(22),
+          topRight: Radius.circular(22),
         ),
-        unselectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.w400,
-          fontSize: 12,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(
+                  color: Colors.cyanAccent.withOpacity(0.4),
+                  width: 1.2,
+                ),
+              ),
+              gradient: LinearGradient(
+                colors: [
+                  Colors.black.withOpacity(0.75),
+                  Colors.black.withOpacity(0.45),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.cyanAccent.withOpacity(0.25),
+                  blurRadius: 20,
+                  offset: Offset(0, -2),
+                ),
+              ],
+            ),
+            child: BottomNavigationBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              currentIndex: _index,
+              onTap: (i) => setState(() => _index = i),
+              selectedItemColor: Colors.cyanAccent,
+              unselectedItemColor: Colors.purpleAccent.withOpacity(0.6),
+              type: BottomNavigationBarType.fixed,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home),
+                  label: 'Inicio',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.menu_book),
+                  label: 'Teoría',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.code),
+                  label: 'Ejemplos',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.quiz),
+                  label: 'Evaluaciones',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.chat_bubble),
+                  label: 'Asistente',
+                ),
+              ],
+            ),
+          ),
         ),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-          BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Teoría'),
-          BottomNavigationBarItem(icon: Icon(Icons.code), label: 'Ejemplos'),
-          BottomNavigationBarItem(icon: Icon(Icons.quiz), label: 'Evaluaciones'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble), label: 'Asistente'),
-        ],
       ),
     );
   }
 }
+
+
+
 
 /// 🔹 PNJ FLOTANTE SIN SOMBRA
 class PNJAssistant extends StatefulWidget {
@@ -932,7 +1020,6 @@ class _AssistantScreenState extends State<AssistantScreen> {
   }
 }
 
-/// BIENVENIDA
 class BienvenidaScreen extends StatefulWidget {
   const BienvenidaScreen({required this.userId});
   final String userId;
@@ -944,10 +1031,9 @@ class BienvenidaScreen extends StatefulWidget {
 class _BienvenidaScreenState extends State<BienvenidaScreen> {
   String userName = "Usuario";
   int avatarIndex = 0;
-  String? profileImagePath; // FOTO DE PERFIL
+  String? profileImagePath;
   Database? _db;
 
-  /// Avatares que representan perfiles
   final List<Map<String, dynamic>> avatars = [
     {"icon": Icons.school, "label": "Estudiante"},
     {"icon": Icons.engineering, "label": "Tutor"},
@@ -963,9 +1049,6 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
     _initDatabase();
   }
 
-  // ----------------------------------------------------------------------
-  //  Inicializa SQLite
-  // ----------------------------------------------------------------------
   Future<void> _initDatabase() async {
     final dbPath = await getDatabasesPath();
     final path = p.join(dbPath, 'user_data.db');
@@ -993,7 +1076,6 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
     _loadUserProfile();
   }
 
-  // Cargar datos desde la base
   Future<void> _loadUserProfile() async {
     final result = await _db!.query(
       'user_profile',
@@ -1008,7 +1090,6 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
         profileImagePath = result.first['photo'] as String?;
       });
     } else {
-      // Si no existe, lo crea
       await _db!.insert("user_profile", {
         "id": widget.userId,
         "name": userName,
@@ -1018,7 +1099,6 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
     }
   }
 
-  // Guardar cambios
   Future<void> _saveUserProfile(String name, int index, String? imgPath) async {
     await _db!.update(
       "user_profile",
@@ -1038,7 +1118,6 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
     });
   }
 
-  // Seleccionar foto desde galería
   Future<String?> _pickImage() async {
     final picker = ImagePicker();
     final XFile? file = await picker.pickImage(source: ImageSource.gallery);
@@ -1052,7 +1131,6 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
     return imgPath;
   }
 
-  // Dialogo para editar perfil
   void _showEditDialog() {
     TextEditingController nameCtrl = TextEditingController(text: userName);
     int tempIndex = avatarIndex;
@@ -1067,13 +1145,10 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
             content: SingleChildScrollView(
               child: Column(
                 children: [
-                  // FOTO DE PERFIL
                   GestureDetector(
                     onTap: () async {
                       final img = await _pickImage();
-                      if (img != null) {
-                        setStateModal(() => tempImg = img);
-                      }
+                      if (img != null) setStateModal(() => tempImg = img);
                     },
                     child: CircleAvatar(
                       radius: 45,
@@ -1084,17 +1159,13 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
                           : null,
                     ),
                   ),
-
                   const SizedBox(height: 15),
-
                   TextField(
                     controller: nameCtrl,
                     decoration: const InputDecoration(labelText: "Nombre"),
                   ),
-
                   const SizedBox(height: 10),
                   const Text("Rol / estilo visual:"),
-
                   Wrap(
                     spacing: 8,
                     children: List.generate(avatars.length, (i) {
@@ -1143,59 +1214,82 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
     );
   }
 
-  // UI
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Inicio"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: _showEditDialog,
-          ),
-        ],
-      ),
+      backgroundColor: const Color(0xFF0A0017), // fondo dark neon
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // FOTO O AVATAR
-            profileImagePath != null
-                ? CircleAvatar(
-              radius: 45,
-              backgroundImage: FileImage(File(profileImagePath!)),
-            )
-                : CircleAvatar(
-              radius: 45,
-              backgroundColor: Colors.cyanAccent.withOpacity(0.2),
-              child: Icon(
-                avatars[avatarIndex]["icon"],
-                size: 45,
-                color: Colors.blueGrey[900],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 25),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // AVATAR
+              profileImagePath != null
+                  ? CircleAvatar(
+                radius: 50,
+                backgroundImage: FileImage(File(profileImagePath!)),
+              )
+                  : CircleAvatar(
+                radius: 50,
+                backgroundColor: Colors.cyanAccent.withOpacity(0.2),
+                child: Icon(
+                  avatars[avatarIndex]["icon"],
+                  size: 50,
+                  color: Colors.cyanAccent,
+                ),
               ),
-            ),
 
-            const SizedBox(height: 10),
-            Text(
-              userName,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
+              const SizedBox(height: 15),
+              Text(
+                "¡Hola, $userName!",
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.cyanAccent,
+                ),
               ),
-            ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.cyanAccent.withOpacity(0.5)),
+                ),
+                child: const Text(
+                  "Esta es una app de apoyo para las buenas prácticas en la ingeniería de software. "
+                      "Aquí encontrarás teoría, ejemplos, evaluaciones y un asistente que te guiará.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white70,
+                  ),
+                ),
+              ),
 
-            const SizedBox(height: 30),
-            const Text(
-              "Selecciona una sección desde el menú inferior",
-              style: TextStyle(fontSize: 15),
-            ),
-          ],
+              const SizedBox(height: 25),
+              ElevatedButton.icon(
+                onPressed: _showEditDialog,
+                icon: const Icon(Icons.settings),
+                label: const Text("Editar Perfil"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.cyanAccent,
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15)),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
 
 // GENERADOR DE USER ID AUTOMÁTICO (sin mostrarlo en UI)
 class UserManager {

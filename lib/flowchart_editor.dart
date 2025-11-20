@@ -46,7 +46,7 @@ class _FlowchartEditorState extends State<FlowchartEditor> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Editor de Diagramas de Flujo")),
+      appBar: AppBar(title: Text("Editor de Diagramas de Uml")),
       body: Stack(
         children: [
           Container(color: Colors.grey[200]),
