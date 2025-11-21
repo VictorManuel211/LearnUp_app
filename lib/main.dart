@@ -3804,12 +3804,12 @@ class _ExamplesScreenState extends State<ExamplesScreen> {
                         },
                       ),
                       ListTile(
-                        title: const Text('Editor de diagramas de flujo'),
-                        subtitle: const Text('Crea y mueve tus propios nodos de flujo.'),
+                        title: const Text('Editor de diagramas de UML'),
+                        subtitle: const Text('Crea y diseña tus propios diagramas.'),
                         onTap: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => FlowchartEditor()),
+                            MaterialPageRoute(builder: (_) => UmlEditor()),
                           );
                         },
                       ),
