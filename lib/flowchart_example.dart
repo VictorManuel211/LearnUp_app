@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:graphview/GraphView.dart';
 
-class FlowchartExample extends StatefulWidget {
+class UmlExample extends StatefulWidget {
   @override
-  _FlowchartExampleState createState() => _FlowchartExampleState();
+  _UmlExampleState createState() => _UmlExampleState();
 }
 
-class _FlowchartExampleState extends State<FlowchartExample> {
+class _UmlExampleState extends State<UmlExample> {
   final Graph graph = Graph()..isTree = true;
   final BuchheimWalkerConfiguration builder = BuchheimWalkerConfiguration();
 
@@ -14,37 +14,96 @@ class _FlowchartExampleState extends State<FlowchartExample> {
   void initState() {
     super.initState();
 
-    // Nodos del diagrama
-    final inicio = Node.Id("Inicio");
-    final ingresar = Node.Id("Ingresar datos");
-    final calcular = Node.Id("Calcular suma");
-    final mostrar = Node.Id("Mostrar resultado");
-    final fin = Node.Id("Fin");
+    // ----- CLASES UML -----
+    final usuario = Node.Id("Usuario");
+    final cliente = Node.Id("Cliente");
+    final admin = Node.Id("Administrador");
 
-    // Conexiones
-    graph.addEdge(inicio, ingresar);
-    graph.addEdge(ingresar, calcular);
-    graph.addEdge(calcular, mostrar);
-    graph.addEdge(mostrar, fin);
+    // Relación de herencia
+    graph.addEdge(usuario, cliente);
+    graph.addEdge(usuario, admin);
 
-    // Configuración de layout
+    // Configuración visual
     builder
-      ..siblingSeparation = (20)
-      ..levelSeparation = (40)
-      ..subtreeSeparation = (30)
+      ..siblingSeparation = 40
+      ..levelSeparation = 60
+      ..subtreeSeparation = 50
       ..orientation = BuchheimWalkerConfiguration.ORIENTATION_TOP_BOTTOM;
   }
 
-  Widget rectangleWidget(String text, {Color color = Colors.blue}) {
+  // Cada clase UML como un rectángulo con 3 secciones
+  Widget umlClassWidget(String className) {
+    Map<String, Map<String, List<String>>> umlData = {
+      "Usuario": {
+        "attributes": ["+ nombre: String", "+ email: String"],
+        "methods": ["+ login()", "+ logout()"]
+      },
+      "Cliente": {
+        "attributes": ["+ numCompras: int"],
+        "methods": ["+ comprar()"]
+      },
+      "Administrador": {
+        "attributes": ["+ nivelAcceso: int"],
+        "methods": ["+ banearUsuario()"]
+      }
+    };
+
+    final data = umlData[className] ??
+        {"attributes": [], "methods": []};
+
     return Container(
-      padding: EdgeInsets.all(8),
+      width: 200,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.8),
-        borderRadius: BorderRadius.circular(8),
+        color: Colors.white,
+        border: Border.all(color: Colors.black, width: 2),
       ),
-      child: Text(
-        text,
-        style: TextStyle(color: Colors.white, fontSize: 14),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // NOMBRE DE LA CLASE
+          Container(
+            padding: EdgeInsets.all(8),
+            child: Text(
+              className,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+              ),
+            ),
+          ),
+
+          Divider(height: 1, color: Colors.black),
+
+          // ATRIBUTOS
+          if (data["attributes"]!.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.all(8),
+              child: Column(
+                children: data["attributes"]!
+                    .map((e) => Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(e, style: TextStyle(fontSize: 13)),
+                ))
+                    .toList(),
+              ),
+            ),
+
+          Divider(height: 1, color: Colors.black),
+
+          // MÉTODOS
+          if (data["methods"]!.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.all(8),
+              child: Column(
+                children: data["methods"]!
+                    .map((e) => Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(e, style: TextStyle(fontSize: 13)),
+                ))
+                    .toList(),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -52,26 +111,26 @@ class _FlowchartExampleState extends State<FlowchartExample> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Ejemplo: Diagrama de Flujo")),
+      appBar: AppBar(title: Text("Ejemplo: Diagrama UML")),
       body: InteractiveViewer(
         constrained: false,
-        boundaryMargin: EdgeInsets.all(50),
-        minScale: 0.01,
+        boundaryMargin: EdgeInsets.all(100),
+        minScale: 0.1,
         maxScale: 5.0,
         child: GraphView(
           graph: graph,
-          algorithm: BuchheimWalkerAlgorithm(builder, TreeEdgeRenderer(builder)),
+          algorithm:
+          BuchheimWalkerAlgorithm(builder, TreeEdgeRenderer(builder)),
           paint: Paint()
             ..color = Colors.black
-            ..strokeWidth = 1
+            ..strokeWidth = 2
             ..style = PaintingStyle.stroke,
           builder: (Node node) {
-            var label = node.key?.value as String;
-            return rectangleWidget(label);
+            String name = node.key?.value.toString() ?? "";
+            return umlClassWidget(name);
           },
         ),
       ),
     );
   }
 }
-// TODO Implement this library.

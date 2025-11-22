@@ -144,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
           screens[_index],
 
 
-          /// 🤖 PNJ flotante con glow neon
+          ///  PNJ flotante con glow neon
           if (_showPNJ)
             Positioned(
               right: 20,
@@ -168,12 +168,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       child: Image.asset(
                         'assets/assistant/pnj.png',
-                        height: 95,
+                        height: 295,
                       ),
                     ),
                   ),
 
-                  /// ❌ Botón cerrar estilo neon minimal
+                  ///  Botón cerrar estilo neon minimal
                   Positioned(
                     right: -5,
                     top: -5,
@@ -3799,7 +3799,7 @@ class _ExamplesScreenState extends State<ExamplesScreen> {
                         onTap: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => FlowchartExample()),
+                            MaterialPageRoute(builder: (_) => UmlExample()),
                           );
                         },
                       ),
