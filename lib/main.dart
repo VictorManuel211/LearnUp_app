@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,6 +15,7 @@ import 'package:diacritic/diacritic.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:convert';
+import 'package:url_launcher/url_launcher.dart';
 
 
 void main() async {
@@ -1282,6 +1284,77 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
                   const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 ),
               ),
+              const SizedBox(height: 30),
+
+// 🔗 Enlace a la página web
+              GestureDetector(
+                onTap: () async {
+                  final url = Uri.parse("https://tusitio.com"); // 🔥 cambia aquí tu web
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(color: Colors.cyanAccent.withOpacity(0.6)),
+                    color: Colors.white.withOpacity(0.05),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.web, color: Colors.cyanAccent),
+                      SizedBox(width: 10),
+                      Text(
+                        "Visitar página oficial",
+                        style: TextStyle(
+                          color: Colors.cyanAccent,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+// 📧 Contacto por correo
+              GestureDetector(
+                onTap: () async {
+                  final email = Uri(
+                    scheme: "mailto",
+                    path: "a22300157@unideh.edu.mx",
+                    query: "subject=Contacto desde LearnUp",
+                  );
+                  await launchUrl(email);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(color: Colors.cyanAccent.withOpacity(0.6)),
+                    color: Colors.white.withOpacity(0.05),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.email, color: Colors.cyanAccent),
+                      SizedBox(width: 10),
+                      Text(
+                        "Contacto: a22300157@unideh.edu.mx",
+                        style: TextStyle(
+                          color: Colors.cyanAccent,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -1291,7 +1364,7 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
 }
 
 
-// GENERADOR DE USER ID AUTOMÁTICO (sin mostrarlo en UI)
+// GENERADOR DE USER ID AUTOMÁTICO
 class UserManager {
   static Future<String> getOrCreateUser() async {
     final prefs = await SharedPreferences.getInstance();
@@ -1395,6 +1468,7 @@ class _TheoryScreenState extends State<TheoryScreen> {
     'Libros y autores: Jez Humble',
     'Libros y autores: Steve McConnell',
     'Libros y autores: The Pragmatic Programmers',
+    'Videos de apoyo',
   ];
 
   @override
@@ -1515,19 +1589,65 @@ class TopicDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String content = _getTopicContent(topic);
+    final content = _getTopicContent(topic);
 
     return Scaffold(
       appBar: AppBar(title: Text(topic)),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
-          child: Text(
-            content,
-            style: TextStyle(fontSize: 16, height: 1.4),
-          ),
+          child: _buildClickableContent(content),
         ),
       ),
+    );
+  }
+
+  /// 🔥 Convierte texto con URLs en enlaces clicables
+  Widget _buildClickableContent(String text) {
+    final urlRegex = RegExp(r'https?://[^\s]+');
+    final matches = urlRegex.allMatches(text);
+
+    if (matches.isEmpty) {
+      return Text(text,
+          style: TextStyle(fontSize: 16, height: 1.4));
+    }
+
+    final List<TextSpan> spans = [];
+    int lastIndex = 0;
+
+    for (final match in matches) {
+      final url = match.group(0)!;
+
+      // Texto antes de la URL
+      spans.add(TextSpan(text: text.substring(lastIndex, match.start)));
+
+      // 🔗 URL clicable
+      spans.add(
+        TextSpan(
+          text: url,
+          style: TextStyle(
+            color: Colors.blue,
+            decoration: TextDecoration.underline,
+          ),
+          recognizer: TapGestureRecognizer()
+            ..onTap = () async {
+              if (await canLaunchUrl(Uri.parse(url))) {
+                await launchUrl(Uri.parse(url),
+                    mode: LaunchMode.externalApplication);
+              }
+            },
+        ),
+      );
+
+      lastIndex = match.end;
+    }
+
+    // Último fragmento
+    spans.add(TextSpan(text: text.substring(lastIndex)));
+
+    return SelectableText.rich(
+      TextSpan(children: spans),
+      style: TextStyle(fontSize: 16, height: 1.4),
     );
   }
 
@@ -1932,78 +2052,213 @@ Ejemplo de implementación práctica:
       case 'Principios SOLID':
         return '''
 [Significado de cada principio]
+S — Single Responsibility: una clase debe tener una sola razón para cambiar.  
+O — Open/Closed: el software debe estar abierto a extensión pero cerrado a modificación.  
+L — Liskov Substitution: una subclase debe poder reemplazar a la clase base sin problemas.  
+I — Interface Segregation: las interfaces deben ser específicas, no gigantes con métodos innecesarios.  
+D — Dependency Inversion: las dependencias deben apuntar a abstracciones, no a implementaciones.
+
 [Ejemplos en código]
+- Aplicar SRP separando lógica de negocio y lógica de presentación.  
+- Utilizar interfaces y clases abstractas para permitir extensiones futuras.  
+- Invertir dependencias usando inyección de dependencias.
+
 [Ventajas en escalabilidad y mantenimiento]
+- Código más modular.  
+- Facilita pruebas unitarias.  
+- Reduce acoplamiento.  
+- Permite agregar nuevas funcionalidades sin romper las existentes.
 ''';
 
       case 'Principio DRY y KISS':
         return '''
 [Definición de cada principio]
+DRY — Don't Repeat Yourself: evita duplicar lógica, datos o estructuras.  
+KISS — Keep It Simple, Stupid: el diseño debe ser lo más simple posible.
+
 [Cómo aplicarlos en código limpio]
+- Crear funciones reutilizables.  
+- Evitar copiar y pegar código.  
+- Dividir problemas grandes en piezas simples.  
+- Elegir soluciones claras en lugar de "trucos" complejos.
+
 [Errores comunes al no seguirlos]
+- Múltiples versiones del mismo algoritmo difíciles de mantener.  
+- Código innecesariamente complejo que causa bugs.  
+- Tiempos mayores de desarrollo debido a duplicidad.
 ''';
 
       case 'Principio YAGNI':
         return '''
 [Significado y aplicación práctica]
+YAGNI — You Aren’t Gonna Need It: no implementes funcionalidades hasta que sean realmente necesarias.
+
 [Relación con la simplicidad del diseño]
+- Evita la sobreingeniería.  
+- Reduce esfuerzo perdido en código que no se usa.  
+- Permite que el sistema evolucione solo cuando el negocio lo exige.
 ''';
 
       case 'Refactorización de código':
         return '''
 [Qué es refactorizar]
+Refactorizar es mejorar la estructura interna del código sin cambiar su comportamiento externo.
+
 [Cuándo hacerlo]
+- Al detectar duplicidad.  
+- Cuando el código se vuelve difícil de leer.  
+- Después de implementar nuevas características.  
+- Como parte del ciclo de TDD: Red → Green → Refactor.
+
 [Técnicas y herramientas recomendadas]
+- Renombrar variables y métodos para claridad.  
+- Extraer métodos/clases.  
+- Eliminar código muerto.  
+- Herramientas: SonarQube, linters, IDE refactor tools.
 ''';
 
       case 'Control de versiones con Git':
         return '''
 [Conceptos básicos de Git]
+- Repositorios.  
+- Commits.  
+- Branches.  
+- Merge y rebase.  
+- Staging area.
+
 [Flujos de trabajo: Git Flow, trunk-based]
+- Git Flow: ramas largas, releases, hotfixes.  
+- Trunk-based: integración continua en main con ramas cortas.
+
 [Buenas prácticas en commits y ramas]
+- Commits pequeños y descriptivos.  
+- Ramas por feature o bugfix.  
+- Evitar commits "misc" o "fix all".  
+- Integrar cambios frecuentemente.
 ''';
+
 
       case 'Comentarios y documentación':
         return '''
 [Importancia de documentar el código]
+- Facilita mantenimiento.  
+- Ayuda al equipo a entender el propósito del código.  
+- Soporta la continuidad del proyecto.
+
 [Tipos de documentación: técnica, API, usuario]
+- Técnica: arquitectura, decisiones, diagramas.  
+- API: endpoints, modelos, ejemplos de uso.  
+- Usuario: cómo utilizar el sistema o app.
+
 [Ejemplos de comentarios útiles]
+- Explicación de una decisión técnica.  
+- Indicar complejidades ocultas.  
+- Describir parámetros o side-effects.
 ''';
+
 
       case 'Revisión de código (Code Review)':
         return '''
 [Propósito de las revisiones]
+- Mejorar calidad del código.  
+- Detectar errores antes de llegar a producción.  
+- Compartir conocimiento entre el equipo.
+
 [Checklist de revisión de calidad]
+- Legibilidad.  
+- Estructura limpia.  
+- Eliminación de duplicidad.  
+- Seguridad y validaciones.  
+- Manejo adecuado de errores.  
+- Pruebas incluidas.
+
 [Beneficios para el equipo]
+- Cohesión técnica.  
+- Menor acumulación de deuda técnica.  
+- Estándares más consistentes.
 ''';
+
 
       case 'Integración y despliegue continuo (CI/CD)':
         return '''
 [Concepto de CI/CD]
+CI — Integración Continua: integrar cambios frecuentemente para detectar errores rápido.  
+CD — Despliegue Continuo: automatizar despliegues en ambientes productivos o preproductivos.
+
 [Herramientas comunes: Jenkins, GitHub Actions, GitLab CI]
+- Jenkins: muy configurable.  
+- GitHub Actions: integrado con GitHub.  
+- GitLab CI/CD: pipelines nativos y fáciles de configurar.
+
 [Ventajas de la automatización]
+- Menos errores humanos.  
+- Despliegues consistentes.  
+- Feedback rápido.  
+- Mayor velocidad de entrega.
 ''';
+
 
       case 'Manejo de errores y excepciones':
         return '''
 [Tipos de errores comunes]
+- Errores de lógica.  
+- Errores de validación.  
+- Excepciones no controladas.  
+- Errores de red, IO o tiempo de espera.
+
 [Estrategias de manejo y logging]
+- Try/catch bien ubicado.  
+- Logs detallados sin exponer datos sensibles.  
+- Retries cuando corresponda.  
+- Fallbacks y degradación controlada.
+
 [Buenas prácticas de resiliencia]
+- Validar datos antes de operar.  
+- No capturar excepciones genéricas sin necesidad.  
+- Implementar monitoreo y alertas.
 ''';
+
 
       case 'Optimización y eficiencia':
         return '''
 [Técnicas de optimización]
+- Reducir operaciones costosas.  
+- Usar estructuras de datos adecuadas.  
+- Evitar loops innecesarios.  
+- Caching.
+
 [Medición de rendimiento]
+- Benchmarks.  
+- Profilers.  
+- Métricas de tiempo y memoria.
+
 [Balance entre legibilidad y velocidad]
+- Primero legible, luego rápido.  
+- Optimizar solo cuando es necesario.  
+- Evitar microoptimizaciones prematuras.
 ''';
+
 
       case 'Entorno de desarrollo (IDE y herramientas)':
         return '''
 [Configuración del entorno]
+- Ajustar formateo automático.  
+- Atajos de teclado.  
+- Configurar compiladores y runtimes.
+
 [Plugins útiles]
+- Linter.  
+- Autocompletado avanzado.  
+- Integración con Git.  
+- Snippets para acelerar escritura.
+
 [Consejos para productividad]
+- Mantener el entorno limpio.  
+- Automatizar tareas repetitivas.  
+- Usar terminal integrada.  
+- Organizar el proyecto en carpetas claras.
 ''';
+
 
     //  PRUEBAS
       case 'Pruebas unitarias':
@@ -2460,6 +2715,25 @@ Beneficios:
 Ejemplos:
 - Apps creadas con Flutter usando widgets reutilizables.
 ''';
+
+      case 'Bases de datos SQL y NoSQL':
+        return '''
+Título: Bases de datos SQL y NoSQL
+
+Definición:
+Dos enfoques de almacenamiento: SQL basado en tablas y relaciones; NoSQL basado en documentos, grafos o columnas.
+
+Importancia:
+Permiten elegir la mejor estructura según el tipo de datos y necesidades del proyecto.
+
+Beneficios:
+- SQL: integridad y estructura estable.
+- NoSQL: flexibilidad y alto rendimiento en escalabilidad horizontal.
+
+Ejemplos:
+- PostgreSQL, MySQL, MongoDB, Redis, Cassandra.
+''';
+
       case 'Caso de uso: Gestión de usuarios':
         return '''
 Título: Caso de uso - Gestión de usuarios
@@ -2984,7 +3258,16 @@ Temas ideales para investigar:
 - Manejo consciente del conocimiento técnico
 ''';
 
+      case 'Videos de apoyo':
+        return '''
+Título: Videos de apoyo
 
+Descripción: aqui tienes algunos videos que puedes  visitar si quieres mas Informacion:
+
+Videos:
+-https://youtu.be/VCzlFblmvSE?si=r-tm2BtpbWCuyLYQ
+
+''';
 
       default:
         return 'Contenido en desarrollo para "$topic".';
@@ -4505,8 +4788,785 @@ class _QuizScreenState extends State<QuizScreen> {
         'opciones': ['Monitorización', 'Refactorización aleatoria', 'Logging excesivo'],
         'respuesta': 'Monitorización'
       },
-
     ],
+
+    'Nivel 21 – SOLID (OCP)': [
+      {
+        'pregunta': '¿Qué establece el principio OCP?',
+        'opciones': [
+          'Las clases deben estar abiertas a extensión y cerradas a modificación',
+          'Las clases deben reescribirse cada vez',
+          'Las clases deben tener múltiples responsabilidades'
+        ],
+        'respuesta': 'Las clases deben estar abiertas a extensión y cerradas a modificación'
+      },
+      {
+        'pregunta': '¿Cómo se logra cumplir OCP?',
+        'opciones': [
+          'Usando interfaces y abstracciones',
+          'Modificando siempre la clase base',
+          'Evitando herencia'
+        ],
+        'respuesta': 'Usando interfaces y abstracciones'
+      },
+      {
+        'pregunta': '¿Cuál es un beneficio de OCP?',
+        'opciones': [
+          'Agregar funcionalidades sin romper el código existente',
+          'Hacer el sistema más rígido',
+          'Aumentar dependencias'
+        ],
+        'respuesta': 'Agregar funcionalidades sin romper el código existente'
+      },
+      {
+        'pregunta': '¿Qué indica una violación de OCP?',
+        'opciones': [
+          'Modificar una clase cada vez que aparece un nuevo requisito',
+          'Tener dependencias invertidas',
+          'Usar interfaces'
+        ],
+        'respuesta': 'Modificar una clase cada vez que aparece un nuevo requisito'
+      }
+   ],
+    'Nivel 22 – SOLID (LSP)': [
+      {
+        'pregunta': '¿Qué exige LSP?',
+        'opciones': [
+          'Que las clases hijas puedan sustituir a las clases padre',
+          'Que no exista herencia',
+          'Que todo método sea estático'
+        ],
+        'respuesta': 'Que las clases hijas puedan sustituir a las clases padre'
+      },
+      {
+        'pregunta': '¿Qué rompe LSP?',
+        'opciones': [
+          'Cambiar el comportamiento esperado de una clase base',
+          'Usar interfaces',
+          'Implementar polimorfismo'
+        ],
+        'respuesta': 'Cambiar el comportamiento esperado de una clase base'
+      },
+      {
+        'pregunta': '¿Por qué es importante LSP?',
+        'opciones': [
+          'Para asegurar comportamiento predecible',
+          'Para aumentar acoplamiento',
+          'Para eliminar clases base'
+        ],
+        "respuesta": "Para asegurar comportamiento predecible"
+      },
+      {
+        'pregunta': '¿Cuál es un síntoma de violación de LSP?',
+        'opciones': [
+          'Subclases que lanzan excepciones inesperadas',
+          'Métodos pequeños',
+          'Nombres descriptivos'
+        ],
+        'respuesta': 'Subclases que lanzan excepciones inesperadas'
+      }
+    ],
+    'Nivel 23 – SOLID (ISP)': [
+      {
+        'pregunta': '¿Qué indica ISP?',
+        'opciones': [
+          'Las interfaces deben ser específicas y pequeñas',
+          'Las interfaces deben tener muchos métodos',
+          'Las clases no deben usar interfaces'
+        ],
+        'respuesta': 'Las interfaces deben ser específicas y pequeñas'
+      },
+      {
+        'pregunta': '¿Qué problema evita ISP?',
+        'opciones': [
+          'Que una clase implemente métodos que no necesita',
+          'Tener código limpio',
+          'Tener clases pequeñas'
+        ],
+        'respuesta': 'Que una clase implemente métodos que no necesita'
+      },
+      {
+        'pregunta': '¿Qué es una mala práctica según ISP?',
+        'opciones': [
+          'Interfaces muy grandes',
+          'Interfaces con un solo método',
+          'Interfaces segmentadas'
+        ],
+        'respuesta': 'Interfaces muy grandes'
+      },
+      {
+        'pregunta': '¿Qué mejora ISP?',
+        'opciones': [
+          'Cohesión y desac acoplamiento',
+          'Complejidad del sistema',
+          'Número de dependencias'
+        ],
+        'respuesta': 'Cohesión y desac acoplamiento'
+      }
+    ],
+
+    'Nivel 24 – SOLID (DIP)': [
+      {
+        'pregunta': '¿Qué propone DIP?',
+        'opciones': [
+          'Depender de abstracciones, no de implementaciones',
+          'Depender siempre del código concreto',
+          'Eliminar interfaces'
+        ],
+        'respuesta': 'Depender de abstracciones, no de implementaciones'
+      },
+      {
+        'pregunta': '¿Qué beneficio aporta DIP?',
+        'opciones': [
+          'Reduce el acoplamiento',
+          'Aumenta el acoplamiento',
+          'Evita pruebas'
+        ],
+        'respuesta': 'Reduce el acoplamiento'
+      },
+      {
+        'pregunta': '¿Qué patrón ayuda a DIP?',
+        'opciones': [
+          'Inyección de dependencias',
+          'Singleton',
+          'Adapter'
+        ],
+        'respuesta': 'Inyección de dependencias'
+      },
+      {
+        'pregunta': '¿Qué rompe el DIP?',
+        'opciones': [
+          'Dependencias directas a clases concretas',
+          'Usar abstracciones',
+          'Usar interfaces'
+        ],
+        'respuesta': 'Dependencias directas a clases concretas'
+      }
+    ],
+
+    'Nivel 25 – Versionado Semántico': [
+      {
+        'pregunta': '¿Qué significan los números en versionado semántico (MAJOR.MINOR.PATCH)?',
+        'opciones': [
+          'Cambios incompatibles, nuevas funciones, correcciones',
+          'Ramificaciones, merges, conflictos',
+          'Usuarios, errores, dependencias'
+        ],
+        'respuesta': 'Cambios incompatibles, nuevas funciones, correcciones'
+      },
+      {
+        'pregunta': '¿Cuándo se incrementa MAJOR?',
+        'opciones': [
+          'Cuando se realizan cambios incompatibles',
+          'Cuando se cambia documentación',
+          'Cuando se arregla un bug pequeño'
+        ],
+        'respuesta': 'Cuando se realizan cambios incompatibles'
+      },
+      {
+        'pregunta': '¿Cuándo se incrementa MINOR?',
+        'opciones': [
+          'Al agregar nuevas funcionalidades compatibles',
+          'Al reescribir todo',
+          'Al eliminar archivos'
+        ],
+        'respuesta': 'Al agregar nuevas funcionalidades compatibles'
+      },
+      {
+        'pregunta': '¿Qué representa PATCH?',
+        'opciones': [
+          'Correcciones de errores',
+          'Nuevas APIs',
+          'Cambios mayores'
+        ],
+        'respuesta': 'Correcciones de errores'
+      }
+    ],
+
+    'Nivel 26 – Arquitectura de Microservicios': [
+      {
+        'pregunta': '¿Qué caracteriza a los microservicios?',
+        'opciones': [
+          'Servicios pequeños, independientes y desplegables por separado',
+          'Un solo servicio grande',
+          'Dependencias fuertes entre módulos'
+        ],
+        'respuesta': 'Servicios pequeños, independientes y desplegables por separado'
+      },
+      {
+        'pregunta': '¿Qué patrón se usa para comunicar microservicios?',
+        'opciones': [
+          'Mensajería asíncrona',
+          'Llamadas internas a clases',
+          'Memoria compartida'
+        ],
+        'respuesta': 'Mensajería asíncrona'
+      },
+      {
+        'pregunta': '¿Cuál es una ventaja de microservicios?',
+        'opciones': [
+          'Escalabilidad independiente',
+          'Mayor dependencia entre módulos',
+          'Mantenimiento más difícil'
+        ],
+        'respuesta': 'Escalabilidad independiente'
+      },
+      {
+        'pregunta': '¿Qué herramienta es común en microservicios?',
+        'opciones': [
+          'Kubernetes',
+          'Excel',
+          'PowerPoint'
+        ],
+        'respuesta': 'Kubernetes'
+      }
+    ],
+
+    'Nivel 27 – DDD (Domain-Driven Design)': [
+      {
+        'pregunta': '¿Qué es el dominio?',
+        'opciones': [
+          'El problema central del negocio',
+          'La base de datos',
+          'La interfaz'
+        ],
+        'respuesta': 'El problema central del negocio'
+      },
+      {
+        'pregunta': '¿Qué es un Bounded Context?',
+        'opciones': [
+          'Un límite funcional claro dentro del dominio',
+          'Una tabla en la base de datos',
+          'Un patrón de UI'
+        ],
+        'respuesta': 'Un límite funcional claro dentro del dominio'
+      },
+      {
+        'pregunta': '¿Qué es un Value Object?',
+        'opciones': [
+          'Objeto sin identidad, definido por sus atributos',
+          'Una entidad única',
+          'Una tabla relacional'
+        ],
+        'respuesta': 'Objeto sin identidad, definido por sus atributos'
+      },
+      {
+        'pregunta': '¿Qué promueve DDD?',
+        'opciones': [
+          'Lenguaje ubicuo',
+          'Código duplicado',
+          'Dependencias circulares'
+        ],
+        'respuesta': 'Lenguaje ubicuo'
+      }
+    ],
+
+    'Nivel 28 – Bases de datos (buenas prácticas)': [
+      {
+        'pregunta': '¿Qué es normalizar una base de datos?',
+        'opciones': [
+          'Reducir redundancia de datos',
+          'Crear más tablas innecesarias',
+          'Duplicar información'
+        ],
+        'respuesta': 'Reducir redundancia de datos'
+      },
+      {
+        'pregunta': '¿Qué es un índice?',
+        'opciones': [
+          'Una estructura que acelera búsquedas',
+          'Un backup',
+          'Un trigger'
+        ],
+        'respuesta': 'Una estructura que acelera búsquedas'
+      },
+      {
+        'pregunta': '¿Por qué usar llaves primarias?',
+        'opciones': [
+          'Para identificar registros de manera única',
+          'Para duplicar filas',
+          'Para hacer consultas más lentas'
+        ],
+        'respuesta': 'Para identificar registros de manera única'
+      },
+      {
+        'pregunta': '¿Qué evita SQL parametrizado?',
+        'opciones': [
+          'Inyección SQL',
+          'Compilación',
+          'Caching'
+        ],
+        'respuesta': 'Inyección SQL'
+      }
+    ],
+
+    'Nivel 29 – API REST (buenas prácticas)': [
+      {
+        'pregunta': '¿Qué formato es estándar en APIs REST?',
+        'opciones': [
+          'JSON',
+          'MP3',
+          'PDF'
+        ],
+        'respuesta': 'JSON'
+      },
+      {
+        'pregunta': '¿Qué representa el código 201?',
+        'opciones': [
+          'Recurso creado',
+          'Error del servidor',
+          'No autorizado'
+        ],
+        'respuesta': 'Recurso creado'
+      },
+      {
+        'pregunta': '¿Qué método se usa para obtener datos?',
+        'opciones': [
+          'GET',
+          'POST',
+          'DELETE'
+        ],
+        'respuesta': 'GET'
+      },
+      {
+        'pregunta': '¿Qué se recomienda en endpoints REST?',
+        'opciones': [
+          'Usar nombres de recursos en plural',
+          'Usar verbs en los paths',
+          'Usar rutas muy largas'
+        ],
+        'respuesta': 'Usar nombres de recursos en plural'
+      }
+    ],
+
+    'Nivel 30 – Testing avanzado': [
+      {
+        'pregunta': '¿Qué son las pruebas de integración?',
+        'opciones': [
+          'Verifican interacción entre módulos',
+          'Evalúan funcionalidad individual',
+          'Miden rendimiento'
+        ],
+        'respuesta': 'Verifican interacción entre módulos'
+      },
+      {
+        'pregunta': '¿Qué es mocking?',
+        'opciones': [
+          'Simular dependencias',
+          'Crear copias de la base de datos',
+          'Repetir pruebas'
+        ],
+        'respuesta': 'Simular dependencias'
+      },
+      {
+        'pregunta': '¿Qué son pruebas E2E?',
+        'opciones': [
+          'Pruebas de flujo completo',
+          'Pruebas de botones',
+          'Pruebas del servidor'
+        ],
+        'respuesta': 'Pruebas de flujo completo'
+      },
+      {
+        'pregunta': '¿Qué se mide en cobertura de código?',
+        'opciones': [
+          'Porcentaje del código ejecutado por pruebas',
+          'Uso de CPU',
+          'Cantidad de usuarios'
+        ],
+        'respuesta': 'Porcentaje del código ejecutado por pruebas'
+      }
+    ],
+
+    'Nivel 31 – Casos de uso (conceptos básicos)': [
+      {
+        'pregunta': '¿Qué es un caso de uso?',
+        'opciones': [
+          'Una descripción de cómo un usuario interactúa con el sistema',
+          'Un diagrama de base de datos',
+          'Un test automatizado'
+        ],
+        'respuesta': 'Una descripción de cómo un usuario interactúa con el sistema'
+      },
+      {
+        'pregunta': '¿Cuál es el objetivo de un caso de uso?',
+        'opciones': [
+          'Definir requerimientos funcionales',
+          'Diseñar la arquitectura',
+          'Crear una base de datos'
+        ],
+        'respuesta': 'Definir requerimientos funcionales'
+      },
+      {
+        'pregunta': '¿Quién ejecuta un caso de uso?',
+        'opciones': [
+          'Un actor externo',
+          'El servidor',
+          'El sistema operativo'
+        ],
+        'respuesta': 'Un actor externo'
+      },
+      {
+        'pregunta': '¿Qué define siempre un caso de uso?',
+        'opciones': [
+          'Un flujo principal y flujos alternos',
+          'El diagrama ER',
+          'El código fuente'
+        ],
+        'respuesta': 'Un flujo principal y flujos alternos'
+      }
+    ],
+
+    'Nivel 32 – Identificación de actores': [
+      {
+        'pregunta': '¿Qué es un actor en un caso de uso?',
+        'opciones': [
+          'Un rol que interactúa con el sistema',
+          'Un archivo del servidor',
+          'Un componente UI'
+        ],
+        'respuesta': 'Un rol que interactúa con el sistema'
+      },
+      {
+        'pregunta': '¿Cuál de estos es un actor?',
+        'opciones': [
+          'Administrador del sistema',
+          'Base de datos',
+          'Middleware'
+        ],
+        'respuesta': 'Administrador del sistema'
+      },
+      {
+        'pregunta': '¿Qué NO se considera un actor?',
+        'opciones': [
+          'Una clase interna',
+          'Un cliente externo',
+          'Un sistema de pagos externo'
+        ],
+        'respuesta': 'Una clase interna'
+      },
+      {
+        'pregunta': '¿Qué caracteriza a un actor?',
+        'opciones': [
+          'Tiene objetivos respecto al sistema',
+          'Debe tener cuenta registrada',
+          'Debe ser siempre un usuario humano'
+        ],
+        'respuesta': 'Tiene objetivos respecto al sistema'
+      }
+    ],
+
+    'Nivel 33 – Flujo principal y alternos': [
+      {
+        'pregunta': '¿Qué describe el flujo principal?',
+        'opciones': [
+          'El camino ideal sin errores',
+          'Los errores posibles',
+          'Los casos excepcionales'
+        ],
+        'respuesta': 'El camino ideal sin errores'
+      },
+      {
+        'pregunta': '¿Qué representan los flujos alternos?',
+        'opciones': [
+          'Variaciones controladas del proceso',
+          'El caso ideal',
+          'Requerimientos no funcionales'
+        ],
+        'respuesta': 'Variaciones controladas del proceso'
+      },
+      {
+        'pregunta': '¿Qué es un flujo de excepción?',
+        'opciones': [
+          'Un escenario donde algo falla',
+          'Una mejora opcional del flujo',
+          'Un requisito adicional'
+        ],
+        'respuesta': 'Un escenario donde algo falla'
+      },
+      {
+        'pregunta': '¿Qué debe evitarse al documentar flujos?',
+        'opciones': [
+          'Describir detalles técnicos innecesarios',
+          'Usar verbos en infinitivo',
+          'Separar actores'
+        ],
+        'respuesta': 'Describir detalles técnicos innecesarios'
+      }
+    ],
+
+    'Nivel 34 – Errores comunes en casos de uso': [
+      {
+        'pregunta': '¿Cuál es un error común al definir casos de uso?',
+        'opciones': [
+          'Describir la interfaz gráfica',
+          'Definir actores',
+          'Definir flujos'
+        ],
+        'respuesta': 'Describir la interfaz gráfica'
+      },
+      {
+        'pregunta': '¿Qué error genera confusión en un caso de uso?',
+        'opciones': [
+          'Usar actores incorrectos',
+          'Usar pasos numerados',
+          'Usar lenguaje claro'
+        ],
+        'respuesta': 'Usar actores incorrectos'
+      },
+      {
+        'pregunta': '¿Qué NO debe incluirse en un caso de uso?',
+        'opciones': [
+          'Código o detalles técnicos',
+          'Objetivos del sistema',
+          'Condiciones de éxito'
+        ],
+        'respuesta': 'Código o detalles técnicos'
+      },
+      {
+        'pregunta': '¿Qué problema causa no definir las precondiciones?',
+        'opciones': [
+          'Flujos ambiguos',
+          'Casos de uso más cortos',
+          'Más documentación'
+        ],
+        'respuesta': 'Flujos ambiguos'
+      }
+    ],
+
+    'Nivel 35 – Validaciones en casos de uso': [
+      {
+        'pregunta': '¿Qué es una precondición?',
+        'opciones': [
+          'Algo que debe cumplirse antes de iniciar el caso de uso',
+          'Un paso final',
+          'Un flujo alterno'
+        ],
+        'respuesta': 'Algo que debe cumplirse antes de iniciar el caso de uso'
+      },
+      {
+        'pregunta': '¿Qué es una postcondición?',
+        'opciones': [
+          'El estado esperado del sistema tras finalizar el caso',
+          'Una excepción',
+          'Una regla del negocio secundaria'
+        ],
+        'respuesta': 'El estado esperado del sistema tras finalizar el caso'
+      },
+      {
+        'pregunta': '¿Qué debe validarse en un flujo de excepción?',
+        'opciones': [
+          'Acciones del sistema en caso de fallo',
+          'Nuevo requerimiento',
+          'Estilos visuales'
+        ],
+        'respuesta': 'Acciones del sistema en caso de fallo'
+      },
+      {
+        'pregunta': '¿Qué se valida en un actor?',
+        'opciones': [
+          'Que tenga un objetivo funcional',
+          'Que sea un usuario registrado',
+          'Que sea interno al sistema'
+        ],
+        'respuesta': 'Que tenga un objetivo funcional'
+      }
+    ],
+
+    'Nivel 36 – Requisitos derivados': [
+      {
+        'pregunta': '¿Qué permite obtener un caso de uso detallado?',
+        'opciones': [
+          'Requisitos funcionales adicionales',
+          'Código reutilizable',
+          'Esquemas de la base de datos'
+        ],
+        'respuesta': 'Requisitos funcionales adicionales'
+      },
+      {
+        'pregunta': '¿Qué deriva directamente del flujo del caso de uso?',
+        'opciones': [
+          'Historias de usuario',
+          'El diseño UI',
+          'La arquitectura'
+        ],
+        'respuesta': 'Historias de usuario'
+      },
+      {
+        'pregunta': '¿Qué puede aparecer al analizar excepciones?',
+        'opciones': [
+          'Nuevas reglas del negocio',
+          'Nuevos colores',
+          'Nuevas pantallas decorativas'
+        ],
+        'respuesta': 'Nuevas reglas del negocio'
+      },
+      {
+        'pregunta': '¿Qué se documenta al identificar restricciones?',
+        'opciones': [
+          'Requisitos no funcionales',
+          'Código fuente',
+          'Logs del sistema'
+        ],
+        'respuesta': 'Requisitos no funcionales'
+      }
+    ],
+
+    'Nivel 37 – Casos de uso y UI/UX': [
+      {
+        'pregunta': '¿Cómo se relacionan los casos de uso con las pantallas?',
+        'opciones': [
+          'Los casos de uso justifican la existencia de pantallas',
+          'Los casos de uso describen botones exactos',
+          'Los casos de uso reemplazan a los mockups'
+        ],
+        'respuesta': 'Los casos de uso justifican la existencia de pantallas'
+      },
+      {
+        'pregunta': '¿Qué NO debe hacer un caso de uso?',
+        'opciones': [
+          'Describir la interfaz visual',
+          'Describir intenciones del usuario',
+          'Describir respuestas del sistema'
+        ],
+        'respuesta': 'Describir la interfaz visual'
+      },
+      {
+        'pregunta': '¿Qué relación tienen historias de usuario y casos de uso?',
+        'opciones': [
+          'Las historias pueden derivar de casos de uso',
+          'Son equivalentes',
+          'No se relacionan'
+        ],
+        'respuesta': 'Las historias pueden derivar de casos de uso'
+      },
+      {
+        'pregunta': '¿Qué produce una mala relación entre UI y casos de uso?',
+        'opciones': [
+          'Flujos confusos',
+          'Arquitecturas más limpias',
+          'Más modularidad'
+        ],
+        'respuesta': 'Flujos confusos'
+      }
+    ],
+
+    'Nivel 38 – Casos de uso en APIs': [
+      {
+        'pregunta': '¿Cómo ayuda un caso de uso al diseñar una API?',
+        'opciones': [
+          'Define qué recursos y endpoints serán necesarios',
+          'Define el modelo de base de datos',
+          'Elige la tecnología'
+        ],
+        'respuesta': 'Define qué recursos y endpoints serán necesarios'
+      },
+      {
+        'pregunta': '¿Qué corresponde documentar para un caso de uso API?',
+        'opciones': [
+          'Entradas y salidas del endpoint',
+          'Estilos del frontend',
+          'Logs del servidor'
+        ],
+        'respuesta': 'Entradas y salidas del endpoint'
+      },
+      {
+        'pregunta': '¿Qué ocurre si un caso de uso está incompleto?',
+        'opciones': [
+          'Endpoints mal diseñados',
+          'Más seguridad',
+          'Menos tráfico de red'
+        ],
+        'respuesta': 'Endpoints mal diseñados'
+      },
+      {
+        'pregunta': '¿Qué debe incluir un caso de uso con servicios externos?',
+        'opciones': [
+          'Flujos de error del proveedor externo',
+          'Diseño de UI',
+          'Mockups'
+        ],
+        'respuesta': 'Flujos de error del proveedor externo'
+      }
+    ],
+
+    'Nivel 39 – Métricas y calidad': [
+      {
+        'pregunta': '¿Qué mide la calidad de un caso de uso?',
+        'opciones': [
+          'Claridad y completitud',
+          'Cantidad de pantallas',
+          'Número de endpoints'
+        ],
+        'respuesta': 'Claridad y completitud'
+      },
+      {
+        'pregunta': '¿Qué indica un caso de uso demasiado largo?',
+        'opciones': [
+          'Existe más de un flujo independiente',
+          'Está bien detallado',
+          'Faltan excepciones'
+        ],
+        'respuesta': 'Existe más de un flujo independiente'
+      },
+      {
+        'pregunta': '¿Qué representa un caso de uso redundante?',
+        'opciones': [
+          'Mal análisis del dominio',
+          'Buena documentación',
+          'Más modularidad'
+        ],
+        'respuesta': 'Mal análisis del dominio'
+      },
+      {
+        'pregunta': '¿Qué mejora dividir casos de uso correctamente?',
+        'opciones': [
+          'Trazabilidad y mantenimiento',
+          'Tamaño del frontend',
+          'Número de queries SQL'
+        ],
+        'respuesta': 'Trazabilidad y mantenimiento'
+      }
+    ],
+
+    'Nivel 40 – Casos de uso avanzados (sistemas complejos)': [
+      {
+        'pregunta': '¿Qué incorpora un caso de uso avanzado?',
+        'opciones': [
+          'Interacciones con múltiples sistemas',
+          'Detalles de la base de datos',
+          'Pantallas exactas'
+        ],
+        'respuesta': 'Interacciones con múltiples sistemas'
+      },
+      {
+        'pregunta': '¿Qué debe documentarse cuando hay colas o mensajería?',
+        'opciones': [
+          'Pasos asincrónicos',
+          'Estilos CSS',
+          'Permisos de usuario'
+        ],
+        'respuesta': 'Pasos asincrónicos'
+      },
+      {
+        'pregunta': '¿Qué se vuelve crucial en un caso de uso distribuido?',
+        'opciones': [
+          'Escenarios de falla',
+          'Decorar la interfaz',
+          'Reducir endpoints'
+        ],
+        'respuesta': 'Escenarios de falla'
+      },
+      {
+        'pregunta': '¿Qué permite un caso de uso bien modelado en sistemas grandes?',
+        'opciones': [
+          'Coordinación entre equipos',
+          'Eliminar pruebas',
+          'Evitar microservicios'
+        ],
+        'respuesta': 'Coordinación entre equipos'
+      }
+    ]
   };
 
   @override
@@ -4823,6 +5883,8 @@ class _PongGameScreenState extends State<PongGameScreen>
 
   double paddleX = 0;
   double paddleWidth = 0.3;
+  double paddleVisualScale = 0.5; // 50% del tamaño real
+
 
   late AnimationController controller;
 
@@ -4971,7 +6033,7 @@ Este juego fue creado usando:
             Align(
               alignment: Alignment(paddleX, 0.95),
               child: Container(
-                width: MediaQuery.of(context).size.width * paddleWidth,
+                width: MediaQuery.of(context).size.width * paddleWidth * paddleVisualScale,
                 height: 16,
                 decoration: BoxDecoration(
                   color: Colors.blueAccent,
@@ -4979,6 +6041,7 @@ Este juego fue creado usando:
                 ),
               ),
             ),
+
 
             // Score
             Positioned(
@@ -5058,9 +6121,12 @@ class _RunGameScreenState extends State<RunGameScreen>
   // ──────────────────────────────
   // VARIABLES DEL JUEGO
   // ──────────────────────────────
+  int jumpCount = 0;
+  final int maxJumps = 2;
+
   double playerY = 0;         // Posición vertical del jugador
   double velocity = 0;        // Velocidad de salto
-  final double gravity = -0.0015;
+  final double gravity = -0.0010;
 
   double obstacleX = 1.2;     // Obstáculo entrando desde la derecha
   double obstacleSpeed = 0.01;
@@ -5116,7 +6182,9 @@ class _RunGameScreenState extends State<RunGameScreen>
         playerY = 0;
         velocity = 0;
         isJumping = false;
+        jumpCount = 0;
       }
+
 
       // Movimiento del obstáculo
       obstacleX -= obstacleSpeed;
@@ -5195,11 +6263,15 @@ Este juego funciona con:
   }
 
   void _jump() {
-    if (!isJumping && !showMessage) {
+    if (showMessage) return;
+
+    if (jumpCount < maxJumps) {
+      velocity = 0.045;   // fuerza del salto
       isJumping = true;
-      velocity = 0.065;
+      jumpCount++;        // ← registra un salto
     }
   }
+
 
   void _closeMessage() {
     setState(() {

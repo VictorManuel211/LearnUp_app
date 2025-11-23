@@ -15,13 +15,20 @@ class _UmlExampleState extends State<UmlExample> {
     super.initState();
 
     // ----- CLASES UML -----
-    final usuario = Node.Id("Usuario");
-    final cliente = Node.Id("Cliente");
-    final admin = Node.Id("Administrador");
+    final manzanas = Node.Id("Manzanas");
+    final verdes = Node.Id("Manzanas Verdes");
+    final rojas = Node.Id("Manzanas Rojas");
+    final bicolores = Node.Id("Manzanas Bicolores");
+    final empacar = Node.Id("Empacar");
+    final agricultor = Node.Id("Agricultor");
 
-    // Relación de herencia
-    graph.addEdge(usuario, cliente);
-    graph.addEdge(usuario, admin);
+    // RELACIONES (flechas tipo herencia/composición)
+    graph.addEdge(manzanas, verdes);
+    graph.addEdge(manzanas, rojas);
+    graph.addEdge(manzanas, bicolores);
+
+    graph.addEdge(empacar, manzanas);
+    graph.addEdge(agricultor, manzanas);
 
     // Configuración visual
     builder
@@ -31,58 +38,64 @@ class _UmlExampleState extends State<UmlExample> {
       ..orientation = BuchheimWalkerConfiguration.ORIENTATION_TOP_BOTTOM;
   }
 
-  // Cada clase UML como un rectángulo con 3 secciones
+  // ----- WIDGET DE CLASE UML (versión estilo imagen) -----
   Widget umlClassWidget(String className) {
     Map<String, Map<String, List<String>>> umlData = {
-      "Usuario": {
-        "attributes": ["+ nombre: String", "+ email: String"],
-        "methods": ["+ login()", "+ logout()"]
+      "Manzanas": {
+        "attributes": ["+ Estado", "+ Tamaño"],
+        "methods": []
       },
-      "Cliente": {
-        "attributes": ["+ numCompras: int"],
-        "methods": ["+ comprar()"]
+      "Agricultor": {
+        "attributes": [],
+        "methods": ["+ Agrupar()", "+ Clasificar()", "+ Empacar()"]
       },
-      "Administrador": {
-        "attributes": ["+ nivelAcceso: int"],
-        "methods": ["+ banearUsuario()"]
-      }
+      "Empacar": {
+        "attributes": [],
+        "methods": []
+      },
+      "Manzanas Verdes": {"attributes": [], "methods": []},
+      "Manzanas Rojas": {"attributes": [], "methods": []},
+      "Manzanas Bicolores": {"attributes": [], "methods": []},
     };
 
     final data = umlData[className] ??
         {"attributes": [], "methods": []};
 
     return Container(
-      width: 200,
+      width: 190,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.yellow[200], // Amarillo UML clásico
         border: Border.all(color: Colors.black, width: 2),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // NOMBRE DE LA CLASE
+          // -------- NOMBRE DE CLASE ----------
           Container(
             padding: EdgeInsets.all(8),
             child: Text(
               className,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 15,
+                color: Colors.black,
               ),
             ),
           ),
 
           Divider(height: 1, color: Colors.black),
 
-          // ATRIBUTOS
+          // ---------- ATRIBUTOS ----------
           if (data["attributes"]!.isNotEmpty)
             Padding(
-              padding: EdgeInsets.all(8),
+              padding: EdgeInsets.all(6),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: data["attributes"]!
-                    .map((e) => Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(e, style: TextStyle(fontSize: 13)),
+                    .map((e) => Text(
+                  e,
+                  style: TextStyle(color: Colors.black, fontSize: 13),
                 ))
                     .toList(),
               ),
@@ -90,15 +103,16 @@ class _UmlExampleState extends State<UmlExample> {
 
           Divider(height: 1, color: Colors.black),
 
-          // MÉTODOS
+          // --------- MÉTODOS ----------
           if (data["methods"]!.isNotEmpty)
             Padding(
-              padding: EdgeInsets.all(8),
+              padding: EdgeInsets.all(6),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: data["methods"]!
-                    .map((e) => Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(e, style: TextStyle(fontSize: 13)),
+                    .map((e) => Text(
+                  e,
+                  style: TextStyle(color: Colors.black, fontSize: 13),
                 ))
                     .toList(),
               ),
@@ -111,18 +125,18 @@ class _UmlExampleState extends State<UmlExample> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Ejemplo: Diagrama UML")),
+      appBar: AppBar(title: Text("Diagrama UML Estilo Imagen")),
       body: InteractiveViewer(
         constrained: false,
-        boundaryMargin: EdgeInsets.all(100),
+        boundaryMargin: EdgeInsets.all(120),
         minScale: 0.1,
-        maxScale: 5.0,
+        maxScale: 5,
         child: GraphView(
           graph: graph,
           algorithm:
           BuchheimWalkerAlgorithm(builder, TreeEdgeRenderer(builder)),
           paint: Paint()
-            ..color = Colors.black
+            ..color = Colors.white
             ..strokeWidth = 2
             ..style = PaintingStyle.stroke,
           builder: (Node node) {
@@ -134,3 +148,4 @@ class _UmlExampleState extends State<UmlExample> {
     );
   }
 }
+
