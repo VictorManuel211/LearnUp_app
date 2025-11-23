@@ -5723,7 +5723,7 @@ class _QuizScreenState extends State<QuizScreen> {
             child: ListTile(
               leading: Icon(Icons.videogame_asset, color: Colors.black),
               title: Text(
-                '🎯 Minijuego Especial',
+                ' ▯ Minijuego Bloks ',
                 style: TextStyle(
                   color: Colors.black,
                   fontWeight: FontWeight.bold,
@@ -5750,9 +5750,9 @@ class _QuizScreenState extends State<QuizScreen> {
             margin: EdgeInsets.all(8),
             color: quizAttempts < 40 ? Colors.grey[400] : Colors.purpleAccent,
             child: ListTile(
-              leading: Icon(Icons.videogame_asset, color: Colors.black),
+              leading: Icon(Icons.star, color: Colors.black),
               title: Text(
-                '🎯 Minijuego Especial',
+                '⭐ Minijuego Estrellas',
                 style: TextStyle(
                   color: Colors.black,
                   fontWeight: FontWeight.bold,
@@ -6447,7 +6447,7 @@ class _AvoidBlocksGameState extends State<AvoidBlocksGame>
 
     setState(() {
       /// Crear obstáculos si hay pocos
-      if (blocks.length < 5) {
+      if (blocks.length < 3) {
         blocks.add(Block(
           x: rng.nextDouble() * 2 - 1,
           y: -1.2,
@@ -6835,9 +6835,11 @@ Este juego se programó con:
     double dx = (playerX - obj.x).abs();
     double dy = (playerY - obj.y).abs();
 
-    return dx < (playerSize + obj.size) &&
-        dy < (playerSize + obj.size);
+    // hitbox reducido
+    return dx < (playerSize * 0.6 + obj.size * 0.6) &&
+        dy < (playerSize * 0.6 + obj.size * 0.6);
   }
+
 
   // ───────────────────────────────────────────────
   // REINICIAR JUEGO
