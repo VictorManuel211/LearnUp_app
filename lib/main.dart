@@ -27,7 +27,7 @@ void main() async {
   runApp(BuenasPracticasApp(userId: userId));
 }
 
-///  APP PRINCIPAL
+//  APP PRINCIPAL
 class BuenasPracticasApp extends StatelessWidget {
   final String userId;
   const BuenasPracticasApp({required this.userId, Key? key}) : super(key: key);
@@ -112,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Stack(
         children: [
 
-          /// 🔥 NEON CYBERPUNK BACKGROUND
+          // NEON CYBERPUNK BACKGROUND
           Container(
             decoration: const BoxDecoration(
               gradient: RadialGradient(
@@ -127,7 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-          /// 🌐 Glow sutil alrededor (como neblina neon)
+          /// Glow sutil alrededor
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -142,11 +142,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-          /// Pantalla actual
+          // Pantalla actual
           screens[_index],
 
 
-          ///  PNJ flotante con glow neon
+          //  PNJ flotante con glow neon
           if (_showPNJ)
             Positioned(
               right: 20,
@@ -175,7 +175,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
 
-                  ///  Botón cerrar estilo neon minimal
+                  // Botón cerrar
                   Positioned(
                     right: -5,
                     top: -5,
@@ -208,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
 
-      /// 🟦 NAVBAR estilo GLASS NEON CYBERPUNK
+      // NAVBAR estilo GLASS NEON CYBERPUNK
       bottomNavigationBar: ClipRRect(
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(22),
@@ -281,7 +281,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
 
 
-/// 🔹 PNJ FLOTANTE SIN SOMBRA
+// PNJ FLOTANTE SIN SOMBRA
 class PNJAssistant extends StatefulWidget {
   final String assetPath;
   final VoidCallback? onTap;
@@ -344,7 +344,7 @@ class _PNJAssistantState extends State<PNJAssistant>
   }
 }
 
-/// AssistantScreen: chat oscuro tipo WhatsApp, PNJ avatar en burbujas
+// AssistantScreen: chat oscuro tipo WhatsApp, PNJ avatar en burbujas
 
 enum Sender { user, bot }
 
@@ -588,9 +588,6 @@ class _AssistantScreenState extends State<AssistantScreen> {
   }
 
 
-
-
-
   // RESPUESTAS LOCALES MEJORADAS
   String _generateReply(String msg, List<String> context) {
     //
@@ -608,7 +605,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
     bool any(List<String> keys) =>
         keys.any((k) => m.contains(removeDiacritics(k.toLowerCase())));
 
-    // --- RESPUESTAS -------------------------
+    // RESPUESTAS
 
     // GENERALES
     if (any(["buenas prácticas", "buenas practicas", "best practices", "software engineering", "ingeniería de software" "¿Que son las buenas practicas en la ingenieria de software?"]))
@@ -850,6 +847,51 @@ class _AssistantScreenState extends State<AssistantScreen> {
 
     if (any(["websocket", "tiempo real", "socket"]))
       return enrich("WebSockets habilitan comunicación bidireccional en tiempo real entre cliente y servidor. Son ideales para chats, juegos o dashboards.");
+
+    if (any(["gestión de usuarios", "crud usuarios", "admin usuarios"]))
+      return enrich("La gestión de usuarios permite registrar, editar, eliminar y autenticar usuarios dentro del sistema. Asegura control de acceso y organización de perfiles.");
+
+    if (any(["carrito", "carrito de compras", "shopping cart"]))
+      return enrich("El caso de uso de carrito de compras maneja la selección de productos, actualización de cantidades y preparación para pago. Simula un flujo típico de comercio electrónico.");
+
+    if (any(["gestión de tareas", "to-do", "tasks"]))
+      return enrich("La gestión de tareas permite crear, actualizar y marcar actividades como completadas. Ideal para organizar procesos y flujos personales o de equipo.");
+
+    if (any(["clases"]))
+      return enrich("El diagrama de clases modela la estructura del sistema: clases, atributos, métodos y relaciones. Es fundamental para diseñar arquitectura orientada a objetos.");
+
+    if (any(["secuencia"]))
+      return enrich("El diagrama de secuencia muestra cómo los objetos interactúan en el tiempo mediante mensajes. Es útil para entender flujos paso a paso.");
+
+    if (any(["actividades"]))
+      return enrich("El diagrama de actividades representa flujos de trabajo, decisiones y paralelismos. Ideal para procesos y lógica de negocio.");
+
+    if (any(["casos de uso"]))
+      return enrich("El diagrama de casos de uso muestra los actores e interacciones principales del sistema. Excelente para definir requisitos y alcance.");
+
+    if (any(["estados"]))
+      return enrich("El diagrama de estados modela cómo un objeto cambia entre estados según eventos. Es útil para sistemas dinámicos o dependientes de condiciones.");
+
+    if (any(["editor" "crear" "dibujar"]))
+      return enrich("Puedes acceder al editor de diagramas UML desde la pantalla de Ejemplos. Te permite crear y editar diagramas directamente dentro de la aplicación.");
+
+    if (any(["perfil", "configuración perfil", "editar perfil"]))
+      return enrich("La pantalla de Perfil te permite modificar tu nombre, progreso y ajustes de la app. Es un panel personal donde controlas tu experiencia.");
+
+    if (any(["teoria", "contenido teórico", "aprendizaje"]))
+      return enrich("La pantalla de Teoría ofrece explicaciones claras sobre buenas prácticas, arquitectura, patrones, UML y más. Todo el contenido está organizado por temas.");
+
+    if (any(["ejemplos", "ejemplos de código", "codigo correcto"]))
+      return enrich("La pantalla de Ejemplos muestra código correcto e incorrecto con explicaciones. Desde allí también puedes abrir el editor UML.");
+
+    if (any(["quiz", "preguntas", "evaluacion"]))
+      return enrich("Los quizzes por niveles evalúan tu aprendizaje y desbloquean contenido adicional. Te ayudan a reforzar conceptos mientras avanzas.");
+
+    if (any(["minijuego", "juego", "ping pong", "run game"]))
+      return enrich("Los minijuegos como Ping Pong y Run Game se desbloquean al ganar puntos en los quizzes. Son una forma divertida de reforzar conceptos.");
+
+    if (any(["asistente", "ayuda", "virtual assistant"]))
+      return enrich("El asistente virtual responde preguntas, explica temas y te guía dentro de la app. Puede reconocer palabras clave para darte respuestas directas.");
 
     // DEFAULT
     return enrich("No tengo una respuesta directa para ese tema, pero puedo ayudarte con conceptos como SOLID, Agile, Testing, arquitectura o buenas prácticas.");
@@ -1286,10 +1328,10 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
               ),
               const SizedBox(height: 30),
 
-// 🔗 Enlace a la página web
+//  Enlace a la página web
               GestureDetector(
                 onTap: () async {
-                  final url = Uri.parse("https://tusitio.com"); // 🔥 cambia aquí tu web
+                  final url = Uri.parse("https://tusitio.com");
                   if (await canLaunchUrl(url)) {
                     await launchUrl(url, mode: LaunchMode.externalApplication);
                   }
@@ -1321,7 +1363,7 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
 
               const SizedBox(height: 20),
 
-// 📧 Contacto por correo
+//  Contacto por correo
               GestureDetector(
                 onTap: () async {
                   final email = Uri(
@@ -1377,8 +1419,6 @@ class UserManager {
     return id;
   }
 }
-
-
 
 
 class TheoryScreen extends StatefulWidget {
@@ -1527,7 +1567,7 @@ class _TheoryScreenState extends State<TheoryScreen> {
       appBar: AppBar(title: const Text("Teoría")),
       body: Column(
         children: [
-          // 🔎 Buscador
+          // Buscador
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
@@ -1542,7 +1582,7 @@ class _TheoryScreenState extends State<TheoryScreen> {
             ),
           ),
 
-          // 📚 Lista de temas
+          // Lista de temas
           Expanded(
             child: ListView.builder(
               itemCount: filteredTopics.length,
@@ -1602,7 +1642,7 @@ class TopicDetailScreen extends StatelessWidget {
     );
   }
 
-  /// 🔥 Convierte texto con URLs en enlaces clicables
+  // Convierte texto con URLs en enlaces clicables
   Widget _buildClickableContent(String text) {
     final urlRegex = RegExp(r'https?://[^\s]+');
     final matches = urlRegex.allMatches(text);
@@ -1621,7 +1661,7 @@ class TopicDetailScreen extends StatelessWidget {
       // Texto antes de la URL
       spans.add(TextSpan(text: text.substring(lastIndex, match.start)));
 
-      // 🔗 URL clicable
+      //  URL clicable
       spans.add(
         TextSpan(
           text: url,
@@ -2759,6 +2799,8 @@ Ejercicios sugeridos:
 - Validación de contraseñas seguras.
 - Manejo de sesión y tokens.
 - Almacenamiento en base de datos.
+
+Puedes intentar hacer un diagrama sobre este caso de uso con la herramienta de editor de diagramas uml en el apartado de ejemplos
 ''';
 
       case 'Caso de uso: Carrito de compras':
@@ -2786,6 +2828,8 @@ Ejercicios sugeridos:
 - Calcular subtotales y totales.
 - Verificar disponibilidad de inventario.
 - Guardar carrito localmente.
+
+Puedes intentar hacer un diagrama sobre este caso de uso con la herramienta de editor de diagramas uml en el apartado de ejemplos
 ''';
 
       case 'Caso de uso: Gestión de tareas':
@@ -2812,6 +2856,8 @@ Ejercicios sugeridos:
 - Añadir prioridad a las tareas.
 - Añadir categorías y búsquedas.
 - Sincronizar tareas con backend.
+
+Puedes intentar hacer un diagrama sobre este caso de uso con la herramienta de editor de diagramas uml en el apartado de ejemplos
 ''';
 
       case 'Caso de uso: Reservas de citas':
@@ -2839,6 +2885,8 @@ Ejercicios sugeridos:
 - Evitar doble reserva.
 - Enviar recordatorios.
 - Calcular duración de servicios.
+
+Puedes intentar hacer un diagrama sobre este caso de uso con la herramienta de editor de diagramas uml en el apartado de ejemplos
 ''';
 
       case 'Caso de uso: Sistema de comentarios':
@@ -2865,6 +2913,8 @@ Ejercicios sugeridos:
 - Limitar longitud de comentarios.
 - Detectar spam.
 - Ordenar por relevancia o fecha.
+
+Puedes intentar hacer un diagrama sobre este caso de uso con la herramienta de editor de diagramas uml en el apartado de ejemplos
 ''';
 
       case 'Caso de uso: Gestión de archivos':
@@ -2891,6 +2941,8 @@ Ejercicios sugeridos:
 - Limitar tamaños.
 - Previsualización de imágenes.
 - Manejo de archivos duplicados.
+
+Puedes intentar hacer un diagrama sobre este caso de uso con la herramienta de editor de diagramas uml en el apartado de ejemplos
 ''';
 
       case 'Caso de uso: Sistema de notificaciones':
@@ -2917,6 +2969,8 @@ Ejercicios sugeridos:
 - Notificaciones locales vs push.
 - Bandeja de notificaciones con estado.
 - Configuración de preferencias del usuario.
+
+Puedes intentar hacer un diagrama sobre este caso de uso con la herramienta de editor de diagramas uml en el apartado de ejemplos
 ''';
 
       case 'Caso de uso: UML - Diagrama de Clases':
@@ -2944,6 +2998,8 @@ Ejercicios sugeridos:
 - Crear un diagrama de clases para un sistema de biblioteca.
 - Representar herencia e interfaces.
 - Separar clases de dominio, servicios y controladores.
+
+Puedes intentar hacer un diagrama sobre este caso de uso con la herramienta de editor de diagramas uml en el apartado de ejemplos
 ''';
 
       case 'Caso de uso: UML - Diagrama de Secuencia':
@@ -2971,6 +3027,8 @@ Ejercicios sugeridos:
 - Diagrama de secuencia para registrar un usuario.
 - Manejo de errores (credenciales inválidas).
 - Diagrama para procesar un pago en un ecommerce.
+
+Puedes intentar hacer un diagrama sobre este caso de uso con la herramienta de editor de diagramas uml en el apartado de ejemplos
 ''';
 
       case 'Caso de uso: UML - Diagrama de Actividades':
@@ -2997,6 +3055,8 @@ Ejercicios sugeridos:
 - Diagrama de actividades para el proceso de checkout.
 - Manejar ramificaciones (carrito vacío, producto sin stock).
 - Flujo de aprobación de un documento.
+
+Puedes intentar hacer un diagrama sobre este caso de uso con la herramienta de editor de diagramas uml en el apartado de ejemplos
 ''';
 
       case 'Caso de uso: UML - Diagrama de Casos de Uso':
@@ -3024,6 +3084,8 @@ Ejercicios sugeridos:
 - Diagrama de casos de uso para una app de banco.
 - Añadir casos extendidos para errores.
 - Separar actores principales y secundarios.
+
+Puedes intentar hacer un diagrama sobre este caso de uso con la herramienta de editor de diagramas uml en el apartado de ejemplos
 ''';
 
       case 'Caso de uso: UML - Diagrama de Estados':
@@ -3050,6 +3112,8 @@ Ejercicios sugeridos:
 - Estado de un pedido (creado → pagado → enviado → entregado).
 - Estados de una sesión de usuario.
 - Ciclo de vida de un ticket de soporte.
+
+Puedes intentar hacer un diagrama sobre este caso de uso con la herramienta de editor de diagramas uml en el apartado de ejemplos
 ''';
 
       case 'Caso de uso: UML - Diagrama de Componentes':
@@ -3076,6 +3140,8 @@ Ejercicios sugeridos:
 - Componentes de una app con frontend, API y base de datos.
 - Servicio de autenticación separado.
 - Integración con servicios externos.
+
+Puedes intentar hacer un diagrama sobre este caso de uso con la herramienta de editor de diagramas uml en el apartado de ejemplos
 ''';
 
       case 'Libros y autores: Robert C. Martin':
@@ -5572,7 +5638,7 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   void initState() {
     super.initState();
-    _loadProgress(); // 🔹 Cargar progreso desde SQL
+    _loadProgress(); // Cargar progreso desde SQL
   }
 
   Future<void> _loadProgress() async {
@@ -5622,9 +5688,7 @@ class _QuizScreenState extends State<QuizScreen> {
       appBar: AppBar(title: Text('🧠 Quiz de Buenas Prácticas')),
       body: ListView(
         children: [
-          // -------------------------
-          // 🔹 LISTA DE NIVELES NORMALES
-          // -------------------------
+          // LISTA DE NIVELES NORMALES
           ...List.generate(niveles.length, (index) {
             final nivel = niveles[index];
             final bloqueado = index > unlockedLevel;
@@ -5649,10 +5713,7 @@ class _QuizScreenState extends State<QuizScreen> {
               ),
             );
           }),
-
-          // ---------------------------------------
-          // 🎮 MINIJUEGO PONG → 10 INTENTOS
-          // ---------------------------------------
+          //  MINIJUEGO PONG → 10 INTENTOS
           Card(
             margin: EdgeInsets.all(8),
             color: quizAttempts < 10 ? Colors.grey[400] : Colors.greenAccent,
@@ -5681,10 +5742,7 @@ class _QuizScreenState extends State<QuizScreen> {
               },
             ),
           ),
-
-          // ---------------------------------------
-          // 🏃 MINIJUEGO RUNNER → 20 INTENTOS
-          // ---------------------------------------
+          //  MINIJUEGO RUNNER → 20 INTENTOS
           Card(
             margin: EdgeInsets.all(8),
             color: quizAttempts < 20 ? Colors.grey[400] : Colors.orangeAccent,
@@ -5714,12 +5772,10 @@ class _QuizScreenState extends State<QuizScreen> {
             ),
           ),
 
-// ---------------------------------------
-// 🎯 NUEVO MINIJUEGO → 30 INTENTOS
-// ---------------------------------------
+// NUEVO MINIJUEGO → 30 INTENTOS
           Card(
             margin: EdgeInsets.all(8),
-            color: quizAttempts < 30 ? Colors.grey[400] : Colors.purpleAccent,
+            color: quizAttempts < 30 ? Colors.grey[400] : Colors.blueAccent,
             child: ListTile(
               leading: Icon(Icons.videogame_asset, color: Colors.black),
               title: Text(
@@ -5891,9 +5947,9 @@ class _PongGameScreenState extends State<PongGameScreen>
   int score = 0;
   bool showMessage = false;
   String messageText = "";
-  bool isFinalMessage = false; // ⬅️ Para saber si el mensaje lleva título o no
+  bool isFinalMessage = false; //  Para saber si el mensaje lleva título o no
 
-  bool finalMessageShown = false; // ⬅️ No mostrar más mensajes después del final
+  bool finalMessageShown = false; // ️ No mostrar más mensajes después del final
 
   final List<String> goodPractices = [
     "Divide el código en funciones pequeñas.",
@@ -5920,7 +5976,7 @@ class _PongGameScreenState extends State<PongGameScreen>
   }
 
   void _updateGame() {
-    if (showMessage) return; // ⛔ Pausa del juego
+    if (showMessage) return; // Pausa del juego
 
     setState(() {
       ballX += ballSpeedX;
@@ -5957,7 +6013,7 @@ class _PongGameScreenState extends State<PongGameScreen>
           // ---- MENSAJE FINAL AL LLEGAR A 30 ----
           if (score == 30 && !finalMessageShown) {
             finalMessageShown = true;
-            isFinalMessage = true; // ⬅️ Este NO lleva título
+            isFinalMessage = true; // ⬅ Este NO lleva título
 
             messageText = """
 ¡Felicidades! Alcanzaste 30 puntos 🎉
@@ -5990,7 +6046,7 @@ Este juego fue creado usando:
 
   void _closeMessage() {
     setState(() => showMessage = false);
-    controller.repeat(); // ▶️ Reanudar juego
+    controller.repeat(); //  Reanudar juego
   }
 
   void _movePaddle(DragUpdateDetails details) {
@@ -6446,7 +6502,7 @@ class _AvoidBlocksGameState extends State<AvoidBlocksGame>
     if (showMessage) return;
 
     setState(() {
-      /// Crear obstáculos si hay pocos
+      // Crear obstáculos si hay pocos
       if (blocks.length < 3) {
         blocks.add(Block(
           x: rng.nextDouble() * 2 - 1,
@@ -6456,12 +6512,12 @@ class _AvoidBlocksGameState extends State<AvoidBlocksGame>
         ));
       }
 
-      /// Mover obstáculos
+      // Mover obstáculos
       for (var b in blocks) {
         b.y += blockSpeed;
       }
 
-      /// Si salen por abajo → reiniciar y sumar punto
+      // Si salen por abajo → reiniciar y sumar punto
       for (var b in blocks) {
         if (b.y > 1.2) {
           b.y = -1.2;
@@ -6501,7 +6557,7 @@ Este juego utiliza:
         }
       }
 
-      /// COLISIÓN
+      // COLISIÓN
       for (var b in blocks) {
         if (_collision(b)) {
           _restart();
@@ -6510,9 +6566,8 @@ Este juego utiliza:
     });
   }
 
-  // ─────────────────────────────────────
   // DETECCIÓN DE COLISIÓN
-  // ─────────────────────────────────────
+
   bool _collision(Block b) {
     double playerLeft = playerX - playerWidth;
     double playerRight = playerX + playerWidth;
@@ -6526,9 +6581,7 @@ Este juego utiliza:
     return horizontal && vertical;
   }
 
-  // ─────────────────────────────────────
   // REINICIAR
-  // ─────────────────────────────────────
   void _restart() {
     blocks.clear();
     blockSpeed = 0.01;
@@ -6559,9 +6612,7 @@ Este juego utiliza:
     super.dispose();
   }
 
-  // ─────────────────────────────────────
   // UI
-  // ─────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -6681,25 +6732,19 @@ class StarCollectorGame extends StatefulWidget {
 class _StarCollectorGameState extends State<StarCollectorGame>
     with SingleTickerProviderStateMixin {
 
-  // ───────────────────────────────────────────────
   // JUGADOR
-  // ───────────────────────────────────────────────
   double playerX = 0;
   double playerY = 0.7;
   final double playerSize = 0.10;
 
-  // ───────────────────────────────────────────────
   // OBJETOS (estrellas y bombas)
-  // ───────────────────────────────────────────────
   List<FallingObject> stars = [];
   List<FallingObject> bombs = [];
 
   double fallingSpeed = 0.01;
   Random rng = Random();
 
-  // ───────────────────────────────────────────────
   // SISTEMA DE MENSAJES Y PUNTOS
-  // ───────────────────────────────────────────────
   int score = 0;
   bool showMessage = false;
   bool isFinalMessage = false;
@@ -6733,9 +6778,7 @@ class _StarCollectorGameState extends State<StarCollectorGame>
     controller.repeat();
   }
 
-  // ───────────────────────────────────────────────
   // ACTUALIZACIÓN DEL JUEGO
-  // ───────────────────────────────────────────────
   void _updateGame() {
     if (showMessage) return;
 
@@ -6828,9 +6871,7 @@ Este juego se programó con:
     });
   }
 
-  // ───────────────────────────────────────────────
   // DETECCIÓN DE COLISIÓN (por distancia)
-  // ───────────────────────────────────────────────
   bool _collision(FallingObject obj) {
     double dx = (playerX - obj.x).abs();
     double dy = (playerY - obj.y).abs();
@@ -6841,9 +6882,7 @@ Este juego se programó con:
   }
 
 
-  // ───────────────────────────────────────────────
   // REINICIAR JUEGO
-  // ───────────────────────────────────────────────
   void _restart() {
     stars.clear();
     bombs.clear();
@@ -6855,9 +6894,7 @@ Este juego se programó con:
     playerY = 0.7;
   }
 
-  // ───────────────────────────────────────────────
   // MOVER JUGADOR
-  // ───────────────────────────────────────────────
   void _movePlayer(DragUpdateDetails d) {
     if (showMessage) return;
 
@@ -6880,9 +6917,7 @@ Este juego se programó con:
     super.dispose();
   }
 
-  // ───────────────────────────────────────────────
   // UI DEL JUEGO
-  // ───────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -6983,9 +7018,7 @@ Este juego se programó con:
   }
 }
 
-// ───────────────────────────────────────────────
 // MODELO DE OBJETO QUE CAE
-// ───────────────────────────────────────────────
 class FallingObject {
   double x;
   double y;

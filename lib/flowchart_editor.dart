@@ -7,13 +7,6 @@ import 'package:flutter/rendering.dart'; // para MatrixUtils.transformPoint
 import 'dart:ui' as ui;
 import 'package:shared_preferences/shared_preferences.dart';
 
-// Editor UML completo en un solo archivo:
-// - Atributos y métodos en nodos
-// - Tipos de conexión UML (herencia, composición, ...)
-// - Panel lateral de herramientas
-// - Exportar a PNG
-// - Exportar/Importar JSON
-// - Guardado automático en SharedPreferences
 
 class UmlEditor extends StatefulWidget {
   @override
@@ -40,6 +33,7 @@ class _UmlEditorState extends State<UmlEditor> {
     _loadFromPrefsOrDefault();
   }
 
+
   Future<void> _loadFromPrefsOrDefault() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString('uml_diagram');
@@ -57,6 +51,7 @@ class _UmlEditorState extends State<UmlEditor> {
         // ignore and create default
       }
     }
+
 
     // default example
     nodes = [
@@ -133,7 +128,7 @@ class _UmlEditorState extends State<UmlEditor> {
     return controller.value.getMaxScaleOnAxis();
   }
 
-  // Convierte coordenada global (por ejemplo, details.offset) a coordenada del "scene"
+  // Convierte coordenada global a coordenada del scene
   Offset _globalToScene(Offset global) {
     final renderBox = context.findRenderObject() as RenderBox;
     final local = renderBox.globalToLocal(global);
@@ -227,6 +222,32 @@ class _UmlEditorState extends State<UmlEditor> {
     }
   }
 
+  bool isNearLine(Offset point, Offset a, Offset b) {
+    const double tolerance = 12.0; // distancia para detectar toque
+
+    final dx = b.dx - a.dx;
+    final dy = b.dy - a.dy;
+
+    // Si la línea es un punto, evita división por 0
+    if (dx == 0 && dy == 0) return false;
+
+    // Proyección escalar del punto sobre el segmento
+    final t = ((point.dx - a.dx) * dx + (point.dy - a.dy) * dy) /
+        (dx * dx + dy * dy);
+
+    // Limitar t para que esté dentro del segmento
+    final clampedT = t.clamp(0.0, 1.0);
+
+    final closest = Offset(
+      a.dx + clampedT * dx,
+      a.dy + clampedT * dy,
+    );
+
+    // Distancia del toque al punto más cercano de la línea
+    return (closest - point).distance <= tolerance;
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -260,11 +281,31 @@ class _UmlEditorState extends State<UmlEditor> {
                 height: 3000,
                 child: Stack(
                   children: [
-                    // Fondo cuadriculado opcional (estético)
+                    // Fondo cuadriculado
                     Positioned.fill(child: CustomPaint(painter: GridPainter())),
 
                     // Conexiones pintadas por debajo
-                    CustomPaint(painter: UmlConnectionPainter(connections), size: Size(3000, 3000)),
+                    GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onLongPressStart: (details) {
+                        final local = details.localPosition;
+
+                        for (var c in List<UmlConnection>.from(connections)) {
+                          final start = c.from.position + Offset(110, 50);
+                          final end = c.to.position + Offset(110, 50);
+
+                          if (isNearLine(local, start, end)) {
+                            setState(() => connections.remove(c));
+                            _saveToPrefs();
+                            break;
+                          }
+                        }
+                      },
+                      child: CustomPaint(
+                        painter: UmlConnectionPainter(connections),
+                        size: Size(3000, 3000),
+                      ),
+                    ),
 
                     // NODOS
                     ...nodes.map((node) {
@@ -302,7 +343,7 @@ class _UmlEditorState extends State<UmlEditor> {
             ),
           ),
 
-          // Panel de herramientas lateral (panel profesional)
+          // Panel de herramientas lateral
           Positioned(
             left: 10,
             top: 80,
@@ -370,6 +411,7 @@ class _UmlEditorState extends State<UmlEditor> {
                     Text('• Mantén presionado un nodo → editar nombre, atributos, métodos.', style: TextStyle(color: Colors.white70)),
                     Text('• Doble tap → eliminar nodo.', style: TextStyle(color: Colors.white70)),
                     Text('• Panel izquierdo → herramientas y tipo de conexión.', style: TextStyle(color: Colors.white70)),
+                    Text('• Manten presionado conexion para eliminar una.', style: TextStyle(color: Colors.white70)),
                     SizedBox(height: 10),
                     Align(alignment: Alignment.centerRight, child: TextButton(onPressed: () => setState(() => showHelp = false), child: Text('Cerrar')))
                   ]),
@@ -547,34 +589,63 @@ class UmlConnectionPainter extends CustomPainter {
   final List<UmlConnection> connections;
   UmlConnectionPainter(this.connections);
 
-  final Paint linePaint = Paint()..color = Colors.black..strokeWidth = 2..style = PaintingStyle.stroke;
+  final Paint linePaint = Paint()
+    ..color = Colors.black
+    ..strokeWidth = 2
+    ..style = PaintingStyle.stroke;
+
+  // punto donde la línea toca el borde del nodo
+  Offset _edgePoint(UmlNode a, UmlNode b) {
+    const nodeWidth = 220;
+    const nodeHeight = 120;
+
+    final centerA = a.position + Offset(nodeWidth / 2, nodeHeight / 2);
+    final centerB = b.position + Offset(nodeWidth / 2, nodeHeight / 2);
+
+    final dx = centerB.dx - centerA.dx;
+    final dy = centerB.dy - centerA.dy;
+
+    final halfW = nodeWidth / 2;
+    final halfH = nodeHeight / 2;
+
+    final scaleX = halfW / dx.abs();
+    final scaleY = halfH / dy.abs();
+    final scale = min(scaleX, scaleY);
+
+    return centerA + Offset(dx * scale, dy * scale);
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
     for (var c in connections) {
-      final start = c.from.position + Offset(110, 50); // centro aproximado del nodo (220x ~50)
-      final end = c.to.position + Offset(110, 50);
+      final start = _edgePoint(c.from, c.to);
+      final end = _edgePoint(c.to, c.from);
 
       switch (c.type) {
         case ConnectionType.association:
           _drawLine(canvas, start, end, solid: true);
           break;
+
         case ConnectionType.inheritance:
           _drawLine(canvas, start, end, solid: true);
           _drawInheritanceTriangle(canvas, start, end, filled: true);
           break;
+
         case ConnectionType.implementation:
           _drawLine(canvas, start, end, solid: false);
           _drawInheritanceTriangle(canvas, start, end, filled: false);
           break;
+
         case ConnectionType.aggregation:
           _drawLine(canvas, start, end, solid: true);
           _drawDiamond(canvas, start, end, filled: false);
           break;
+
         case ConnectionType.composition:
           _drawLine(canvas, start, end, solid: true);
           _drawDiamond(canvas, start, end, filled: true);
           break;
+
         case ConnectionType.dependency:
           _drawLine(canvas, start, end, solid: false);
           break;
@@ -590,57 +661,79 @@ class UmlConnectionPainter extends CustomPainter {
     }
   }
 
-  void _drawDashedLine(Canvas canvas, Offset a, Offset b, Paint paint, {double dash = 5, double gap = 5}) {
+  void _drawDashedLine(Canvas canvas, Offset a, Offset b, Paint paint,
+      {double dash = 5, double gap = 5}) {
     final total = (b - a).distance;
-    final direction = (b - a) / total;
-    double drawn = 0.0;
+    final dir = (b - a) / total;
+    double drawn = 0;
     while (drawn < total) {
-      final start = a + direction * drawn;
-      final end = a + direction * min(drawn + dash, total);
-      canvas.drawLine(start, end, paint);
+      canvas.drawLine(a + dir * drawn, a + dir * min(drawn + dash, total), paint);
       drawn += dash + gap;
     }
   }
 
-  void _drawInheritanceTriangle(Canvas canvas, Offset a, Offset b, {bool filled = true}) {
+  void _drawInheritanceTriangle(Canvas canvas, Offset a, Offset b,
+      {bool filled = true}) {
     final angle = (b - a).direction;
+
     final tip = b;
     final base1 = tip - Offset(18 * cos(angle - 0.3), 18 * sin(angle - 0.3));
     final base2 = tip - Offset(18 * cos(angle + 0.3), 18 * sin(angle + 0.3));
-    final path = Path()..moveTo(tip.dx, tip.dy)..lineTo(base1.dx, base1.dy)..lineTo(base2.dx, base2.dy)..close();
 
-    final fillPaint = Paint()..color = Colors.white..style = filled ? PaintingStyle.fill : PaintingStyle.stroke..strokeWidth = 2;
-    final stroke = Paint()..color = Colors.black..style = PaintingStyle.stroke..strokeWidth = 2;
-    canvas.drawPath(path, fillPaint);
+    final path = Path()
+      ..moveTo(tip.dx, tip.dy)
+      ..lineTo(base1.dx, base1.dy)
+      ..lineTo(base2.dx, base2.dy)
+      ..close();
+
+    final fill = Paint()
+      ..color = filled ? Colors.white : Colors.white
+      ..style = filled ? PaintingStyle.fill : PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    final stroke = Paint()
+      ..color = Colors.black
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    canvas.drawPath(path, fill);
     canvas.drawPath(path, stroke);
   }
 
   void _drawDiamond(Canvas canvas, Offset a, Offset b, {bool filled = false}) {
     final angle = (b - a).direction;
     final center = a + (b - a) * 0.12;
-    final size = 12.0;
+    const size = 12.0;
 
     final p1 = center + Offset(size * cos(angle), size * sin(angle));
     final p2 = center + Offset(size * cos(angle + pi / 2), size * sin(angle + pi / 2));
     final p3 = center + Offset(size * cos(angle + pi), size * sin(angle + pi));
     final p4 = center + Offset(size * cos(angle - pi / 2), size * sin(angle - pi / 2));
 
-    final path = Path()..moveTo(p1.dx, p1.dy)..lineTo(p2.dx, p2.dy)..lineTo(p3.dx, p3.dy)..lineTo(p4.dx, p4.dy)..close();
+    final path = Path()
+      ..moveTo(p1.dx, p1.dy)
+      ..lineTo(p2.dx, p2.dy)
+      ..lineTo(p3.dx, p3.dy)
+      ..lineTo(p4.dx, p4.dy)
+      ..close();
 
-    if (filled) {
-      final fill = Paint()..color = Colors.black..style = PaintingStyle.fill;
-      canvas.drawPath(path, fill);
-    } else {
-      final fill = Paint()..color = Colors.white..style = PaintingStyle.fill;
-      canvas.drawPath(path, fill);
-      final stroke = Paint()..color = Colors.black..style = PaintingStyle.stroke..strokeWidth = 2;
-      canvas.drawPath(path, stroke);
-    }
+    final fillPaint = Paint()
+      ..color = filled ? Colors.black : Colors.white
+      ..style = PaintingStyle.fill;
+
+    final stroke = Paint()
+      ..color = Colors.black
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    canvas.drawPath(path, fillPaint);
+    canvas.drawPath(path, stroke);
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
+
 
 // Pintor de cuadrícula para estética
 class GridPainter extends CustomPainter {

@@ -19,7 +19,7 @@ class AppDatabase {
 
     return await openDatabase(
       path,
-      version: 2, // 🔥 Subimos versión para agregar nueva tabla
+      version: 2,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );

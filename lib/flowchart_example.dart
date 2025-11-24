@@ -14,7 +14,7 @@ class _UmlExampleState extends State<UmlExample> {
   void initState() {
     super.initState();
 
-    // ----- CLASES UML -----
+    // CLASES UML
     final manzanas = Node.Id("Manzanas");
     final verdes = Node.Id("Manzanas Verdes");
     final rojas = Node.Id("Manzanas Rojas");
@@ -22,7 +22,7 @@ class _UmlExampleState extends State<UmlExample> {
     final empacar = Node.Id("Empacar");
     final agricultor = Node.Id("Agricultor");
 
-    // RELACIONES (flechas tipo herencia/composición)
+    // RELACIONES
     graph.addEdge(manzanas, verdes);
     graph.addEdge(manzanas, rojas);
     graph.addEdge(manzanas, bicolores);
@@ -38,7 +38,7 @@ class _UmlExampleState extends State<UmlExample> {
       ..orientation = BuchheimWalkerConfiguration.ORIENTATION_TOP_BOTTOM;
   }
 
-  // ----- WIDGET DE CLASE UML (versión estilo imagen) -----
+  // WIDGET DE CLASE UML
   Widget umlClassWidget(String className) {
     Map<String, Map<String, List<String>>> umlData = {
       "Manzanas": {
@@ -70,7 +70,7 @@ class _UmlExampleState extends State<UmlExample> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // -------- NOMBRE DE CLASE ----------
+          // NOMBRE DE CLASE
           Container(
             padding: EdgeInsets.all(8),
             child: Text(
@@ -86,7 +86,7 @@ class _UmlExampleState extends State<UmlExample> {
 
           Divider(height: 1, color: Colors.black),
 
-          // ---------- ATRIBUTOS ----------
+          // ATRIBUTOS
           if (data["attributes"]!.isNotEmpty)
             Padding(
               padding: EdgeInsets.all(6),
@@ -103,7 +103,7 @@ class _UmlExampleState extends State<UmlExample> {
 
           Divider(height: 1, color: Colors.black),
 
-          // --------- MÉTODOS ----------
+          // MÉTODOS
           if (data["methods"]!.isNotEmpty)
             Padding(
               padding: EdgeInsets.all(6),
