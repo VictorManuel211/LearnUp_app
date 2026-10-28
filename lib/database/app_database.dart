@@ -19,21 +19,23 @@ class AppDatabase {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,     // ← ¡SUBIMOS LA VERSIÓN!
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
   }
 
   Future _createDB(Database db, int version) async {
-    // Tabla de progreso
+    // Nueva tabla de progreso (solo 1 fila)
     await db.execute('''
       CREATE TABLE quiz_progress (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        levelIndex INTEGER NOT NULL,
-        completed INTEGER NOT NULL
+        id INTEGER PRIMARY KEY,
+        levelIndex INTEGER NOT NULL
       );
     ''');
+
+    // Inicializamos progreso en nivel 0
+    await db.insert('quiz_progress', {'id': 1, 'levelIndex': 0});
 
     // Tabla de intentos
     await db.execute('''
@@ -45,13 +47,21 @@ class AppDatabase {
   }
 
   Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
+    if (oldVersion < 3) {
+      // Eliminamos tabla vieja
+      await db.execute('DROP TABLE IF EXISTS quiz_progress');
+
+      // Creamos versión corregida
       await db.execute('''
-        CREATE TABLE quiz_attempts (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          timestamp TEXT NOT NULL
+        CREATE TABLE quiz_progress (
+          id INTEGER PRIMARY KEY,
+          levelIndex INTEGER NOT NULL
         );
       ''');
+
+      // Insertar progreso inicial
+      await db.insert('quiz_progress', {'id': 1, 'levelIndex': 0});
     }
   }
 }
+

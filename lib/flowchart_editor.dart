@@ -1,4 +1,3 @@
-// Archivo: uml_editor_with_export.dart
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
@@ -6,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart'; // para MatrixUtils.transformPoint
 import 'dart:ui' as ui;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:file_saver/file_saver.dart';
 
 
 class UmlEditor extends StatefulWidget {
@@ -32,7 +32,6 @@ class _UmlEditorState extends State<UmlEditor> {
     super.initState();
     _loadFromPrefsOrDefault();
   }
-
 
   Future<void> _loadFromPrefsOrDefault() async {
     final prefs = await SharedPreferences.getInstance();
@@ -138,42 +137,79 @@ class _UmlEditorState extends State<UmlEditor> {
     return scenePoint;
   }
 
-  // Exportar JSON: mostrar JSON en diálogo y copiar
-  void exportJSON() {
-    final map = {'nodes': nodes.map((e) => e.toJson()).toList(), 'connections': connections.map((e) => e.toJson(nodes)).toList()};
-    final pretty = const JsonEncoder.withIndent('  ').convert(map);
-
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text('Exportar JSON'),
-        content: SingleChildScrollView(child: SelectableText(pretty)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text('Cerrar')),
-        ],
-      ),
-    );
+  // Construye el JSON del diagrama.
+  String _diagramJson() {
+    final map = {
+      'nodes': nodes.map((e) => e.toJson()).toList(),
+      'connections': connections.map((e) => e.toJson(nodes)).toList(),
+    };
+    return const JsonEncoder.withIndent('  ').convert(map);
   }
 
-  // Exportar PNG: renderizar RepaintBoundary
+  // Exportar JSON como archivo real usando el selector/descarga del sistema.
+  Future<void> exportJSON() async {
+    try {
+      final pretty = _diagramJson();
+      final bytes = Uint8List.fromList(utf8.encode(pretty));
+
+      final savedPath = await FileSaver.instance.saveAs(
+        name: 'diagrama_uml',
+        bytes: bytes,
+        fileExtension: 'json',
+        mimeType: MimeType.json,
+      );
+
+      if (!mounted) return;
+      final message = savedPath == null
+          ? 'Exportación JSON cancelada.'
+          : 'JSON exportado correctamente: $savedPath';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al exportar JSON: $e')),
+      );
+    }
+  }
+
+  // Exportar PNG como archivo real.
   Future<void> exportPNG() async {
     try {
-      RenderRepaintBoundary boundary = repaintKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-      ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      final pngBytes = byteData!.buffer.asUint8List();
+      final boundary = repaintKey.currentContext?.findRenderObject()
+      as RenderRepaintBoundary?;
 
-      // Mostrar la imagen en un diálogo
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: Text('PNG generado'),
-          content: SingleChildScrollView(child: Image.memory(pngBytes)),
-          actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text('Cerrar'))],
-        ),
+      if (boundary == null) {
+        throw Exception('No se pudo obtener el lienzo para exportar.');
+      }
+
+      final image = await boundary.toImage(pixelRatio: 3.0);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+
+      if (byteData == null) {
+        throw Exception('No se pudo convertir el diagrama a PNG.');
+      }
+
+      final pngBytes = byteData.buffer.asUint8List();
+
+      final savedPath = await FileSaver.instance.saveAs(
+        name: 'diagrama_uml',
+        bytes: pngBytes,
+        fileExtension: 'png',
+        mimeType: MimeType.png,
       );
+
+      image.dispose();
+
+      if (!mounted) return;
+      final message = savedPath == null
+          ? 'Exportación PNG cancelada.'
+          : 'PNG exportado correctamente: $savedPath';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al generar PNG: \$e')));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al exportar PNG: $e')),
+      );
     }
   }
 
@@ -815,5 +851,6 @@ class ConnectionToolToggle extends StatelessWidget {
     ]);
   }
 }
+
 
 

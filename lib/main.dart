@@ -13,19 +13,29 @@ import 'flowchart_editor.dart';
 import 'package:dart_openai/dart_openai.dart';
 import 'package:diacritic/diacritic.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:convert';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:path_provider/path_provider.dart'; // Rutas del sistema (app documents)
+import 'dart:convert'; // JSON encode/decode, base64
+import 'package:url_launcher/url_launcher.dart'; // Abrir URL externas en navegador
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   await Future.delayed(const Duration(milliseconds: 200));
 
   final userId = await UserManager.getOrCreateUser();
 
   runApp(BuenasPracticasApp(userId: userId));
 }
+
+
 
 //  APP PRINCIPAL
 class BuenasPracticasApp extends StatelessWidget {
@@ -111,7 +121,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
       body: Stack(
         children: [
-
           // NEON CYBERPUNK BACKGROUND
           Container(
             decoration: const BoxDecoration(
@@ -144,7 +153,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
           // Pantalla actual
           screens[_index],
-
 
           //  PNJ flotante con glow neon
           if (_showPNJ)
@@ -278,9 +286,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-
-
-
 // PNJ FLOTANTE SIN SOMBRA
 class PNJAssistant extends StatefulWidget {
   final String assetPath;
@@ -367,7 +372,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
     ChatMessage(
         sender: Sender.bot,
         text:
-        "Bienvenido. Soy su asistente de buenas prácticas de software. Puedes preguntarme sobre diseño, patrones o arquitectura, tambien puedes preguntarme cualquier duda con respecto a esta aplicacion")
+            "Bienvenido. Soy su asistente de buenas prácticas de software. Puedes preguntarme sobre diseño, patrones o arquitectura, tambien puedes preguntarme cualquier duda con respecto a esta aplicacion")
   ];
 
   // Memoria corta: últimos mensajes del usuario
@@ -385,19 +390,19 @@ class _AssistantScreenState extends State<AssistantScreen> {
   String _modo = "formal";
   final Map<String, String> _personalidades = {
     "formal":
-    "Eres un asistente técnico formal, preciso y sin emojis. Das explicaciones profesionales y estructuradas.",
+        "Eres un asistente técnico formal, preciso y sin emojis. Das explicaciones profesionales y estructuradas.",
     "mentor":
-    "Eres un mentor experto en desarrollo de software, paciente y didáctico. Acompañas el aprendizaje paso a paso.",
+        "Eres un mentor experto en desarrollo de software, paciente y didáctico. Acompañas el aprendizaje paso a paso.",
     "casual":
-    "Eres un desarrollador relajado que explica conceptos de forma sencilla y conversacional, con ejemplos prácticos.",
+        "Eres un desarrollador relajado que explica conceptos de forma sencilla y conversacional, con ejemplos prácticos.",
     "motivacional":
-    "Eres un mentor que motiva al programador a mejorar y aprender de sus errores, usando tono positivo y alentador."
+        "Eres un mentor que motiva al programador a mejorar y aprender de sus errores, usando tono positivo y alentador."
   };
 
   @override
   void initState() {
     super.initState();
-    _loadMessages();     // carga chat al abrir la pantalla
+    _loadMessages(); // carga chat al abrir la pantalla
   }
 
   // ENVÍO DE MENSAJES
@@ -418,7 +423,6 @@ class _AssistantScreenState extends State<AssistantScreen> {
 // Guardar inmediatamente
     _saveMessages();
 
-
     // Cambiar de modo con comandos tipo /modo formal
     if (trimmed.toLowerCase().startsWith("/modo")) {
       final nuevo = trimmed.toLowerCase().split(" ").last;
@@ -428,7 +432,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
           _messages.add(ChatMessage(
               sender: Sender.bot,
               text:
-              "Modo cambiado a *$_modo*. (${_modo[0].toUpperCase()}${_modo.substring(1)})"));
+                  "Modo cambiado a *$_modo*. (${_modo[0].toUpperCase()}${_modo.substring(1)})"));
           _isTyping = false;
         });
         return;
@@ -476,7 +480,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
           ],
         ),
         ..._messages.map(
-              (m) => OpenAIChatCompletionChoiceMessageModel(
+          (m) => OpenAIChatCompletionChoiceMessageModel(
             role: m.sender == Sender.bot
                 ? OpenAIChatMessageRole.assistant
                 : OpenAIChatMessageRole.user,
@@ -550,15 +554,18 @@ class _AssistantScreenState extends State<AssistantScreen> {
       _messages.clear();
       _messages.add(ChatMessage(
           sender: Sender.bot,
-          text: "hey, soy tu asistente virtual, puedes preguntarme sobre diseño, patrones o arquitectura, tambien puedes preguntarme cualquier duda con respecto a esta aplicacion¿En qué puedo ayudarte ahora?"));
+          text:
+              "hey, soy tu asistente virtual, puedes preguntarme sobre diseño, patrones o arquitectura, tambien puedes preguntarme cualquier duda con respecto a esta aplicacion¿En qué puedo ayudarte ahora?"));
     });
   }
+
   void _confirmResetChat() {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text("Reiniciar conversación"),
-        content: const Text("¿Deseas borrar todo el chat y comenzar desde cero?"),
+        content:
+            const Text("¿Deseas borrar todo el chat y comenzar desde cero?"),
         actions: [
           TextButton(
             child: const Text("Cancelar"),
@@ -575,7 +582,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
                 _messages.add(ChatMessage(
                   sender: Sender.bot,
                   text:
-                  " hey, soy tu asistente virtual, puedes preguntarme sobre diseño, patrones o arquitectura, tambien puedes preguntarme cualquier duda con respecto a esta aplicacion¿En qué puedo ayudarte ahora?",
+                      " hey, soy tu asistente virtual, puedes preguntarme sobre diseño, patrones o arquitectura, tambien puedes preguntarme cualquier duda con respecto a esta aplicacion¿En qué puedo ayudarte ahora?",
                 ));
               });
 
@@ -586,7 +593,6 @@ class _AssistantScreenState extends State<AssistantScreen> {
       ),
     );
   }
-
 
   // RESPUESTAS LOCALES MEJORADAS
   String _generateReply(String msg, List<String> context) {
@@ -606,312 +612,446 @@ class _AssistantScreenState extends State<AssistantScreen> {
         keys.any((k) => m.contains(removeDiacritics(k.toLowerCase())));
 
     // RESPUESTAS
-
-    // GENERALES
-    if (any(["buenas prácticas", "buenas practicas", "best practices", "software engineering", "ingeniería de software" "¿Que son las buenas practicas en la ingenieria de software?"]))
-      return enrich("Las buenas prácticas de ingeniería de software son un conjunto de directrices y recomendaciones que buscan optimizar el proceso de creación de aplicaciones y sistemas, ayudan a construir sistemas más claros, mantenibles y seguros. Incluyen principios como modularidad, pruebas tempranas, documentación efectiva y diseño orientado al usuario.");
+    if (any([
+      "buenas prácticas",
+      "buenas practicas",
+      "best practices",
+      "software engineering",
+      "ingeniería de software"
+          "¿Que son las buenas practicas en la ingenieria de software?"
+    ]))
+      return enrich(
+          "Las buenas prácticas de ingeniería de software son un conjunto de directrices y recomendaciones que buscan optimizar el proceso de creación de aplicaciones y sistemas, ayudan a construir sistemas más claros, mantenibles y seguros. Incluyen principios como modularidad, pruebas tempranas, documentación efectiva y diseño orientado al usuario.");
 
     if (any(["desarrollo de software", "software development"]))
-      return enrich("El desarrollo de software es un proceso iterativo que abarca análisis, diseño, codificación, pruebas y evolución. Su objetivo es transformar una necesidad del usuario en una solución funcional y de calidad.");
+      return enrich(
+          "El desarrollo de software es un proceso iterativo que abarca análisis, diseño, codificación, pruebas y evolución. Su objetivo es transformar una necesidad del usuario en una solución funcional y de calidad.");
 
     if (any(["ciclo de vida", "life cycle"]))
-      return enrich("El ciclo de vida del software es un proceso estructurado que guía el desarrollo de aplicaciones desde su concepción hasta su retiro, suele incluir: planificación, diseño arquitectónico, desarrollo, pruebas, despliegue y mantenimiento. Cada fase retroalimenta a las demás para mejorar el producto final.");
+      return enrich(
+          "El ciclo de vida del software es un proceso estructurado que guía el desarrollo de aplicaciones desde su concepción hasta su retiro, suele incluir: planificación, diseño arquitectónico, desarrollo, pruebas, despliegue y mantenimiento. Cada fase retroalimenta a las demás para mejorar el producto final.");
 
     if (any(["metodología ágil", "metodologia agil", "agile"]))
-      return enrich("Son un conjunto de técnicas aplicadas en ciclos de trabajo cortos, con el objetivo de que el proceso de entrega de un proyecto sea más eficiente. Las metodologías ágiles —como Scrum o Kanban— trabajan en ciclos cortos para entregar valor de forma continua. Fomentan la colaboración, la adaptabilidad y la retroalimentación frecuente.");
+      return enrich(
+          "Son un conjunto de técnicas aplicadas en ciclos de trabajo cortos, con el objetivo de que el proceso de entrega de un proyecto sea más eficiente. Las metodologías ágiles —como Scrum o Kanban— trabajan en ciclos cortos para entregar valor de forma continua. Fomentan la colaboración, la adaptabilidad y la retroalimentación frecuente.");
 
     if (any(["calidad", "quality"]))
-      return enrich("La calidad del software no es solo ausencia de errores: también implica usabilidad, rendimiento, seguridad, mantenibilidad y satisfacción del usuario final.");
+      return enrich(
+          "La calidad del software no es solo ausencia de errores: también implica usabilidad, rendimiento, seguridad, mantenibilidad y satisfacción del usuario final.");
 
     if (any(["mantenimiento", "maintenance"]))
-      return enrich("El mantenimiento de software se refiere a todas las actividades necesarias para asegurar que un sistema de software siga funcionando de manera óptima a lo largo del tiempo, incluye corregir fallos, mejorar funcionalidades y adaptar el sistema a nuevos requisitos o tecnologías. Representa una parte significativa del costo total del ciclo de vida.");
+      return enrich(
+          "El mantenimiento de software se refiere a todas las actividades necesarias para asegurar que un sistema de software siga funcionando de manera óptima a lo largo del tiempo, incluye corregir fallos, mejorar funcionalidades y adaptar el sistema a nuevos requisitos o tecnologías. Representa una parte significativa del costo total del ciclo de vida.");
 
-    if (any(["gestión de proyectos", "gestion de proyectos", "project management"]))
-      return enrich("La gestión de proyectos de software coordina recursos, riesgos, tiempos y expectativas. Su meta es entregar soluciones con calidad y dentro de los límites definidos.");
+    if (any(
+        ["gestión de proyectos", "gestion de proyectos", "project management"]))
+      return enrich(
+          "La gestión de proyectos de software coordina recursos, riesgos, tiempos y expectativas. Su meta es entregar soluciones con calidad y dentro de los límites definidos.");
 
     if (any(["productividad", "productivity", "eficiencia", "efficiency"]))
-      return enrich("La productividad en un equipo de desarrollo mejora con automatización, buena comunicación, revisiones de código y procesos claros. No se trata de hacer más, sino de hacer mejor.");
+      return enrich(
+          "La productividad en un equipo de desarrollo mejora con automatización, buena comunicación, revisiones de código y procesos claros. No se trata de hacer más, sino de hacer mejor.");
 
     if (any(["colaboración", "colaboracion", "team"]))
-      return enrich("Una buena colaboración entre desarrolladores acelera la entrega de valor y reduce errores. Técnicas como pair programming o code reviews fortalecen el trabajo en equipo.");
+      return enrich(
+          "Una buena colaboración entre desarrolladores acelera la entrega de valor y reduce errores. Técnicas como pair programming o code reviews fortalecen el trabajo en equipo.");
 
     if (any(["documentación", "documentacion", "documentation"]))
-      return enrich("La documentación es una guía viva que ayuda a entender decisiones, procesos y estructuras del sistema. Facilita el onboarding y reduce ambigüedades.");
+      return enrich(
+          "La documentación es una guía viva que ayuda a entender decisiones, procesos y estructuras del sistema. Facilita el onboarding y reduce ambigüedades.");
 
     if (any(["mejora continua", "continuous improvement"]))
-      return enrich("La mejora continua implica analizar qué funcionó, qué no, y ajustar procesos para la siguiente iteración. Equipos que reflexionan avanzan más rápido.");
+      return enrich(
+          "La mejora continua implica analizar qué funcionó, qué no, y ajustar procesos para la siguiente iteración. Equipos que reflexionan avanzan más rápido.");
 
     // PLANIFICACIÓN
     if (any(["requisito", "requirement", "analysis"]))
-      return enrich("El análisis de requisitos define qué debe hacer el producto y por qué. Es la base para un desarrollo alineado a las necesidades del usuario.");
+      return enrich(
+          "El análisis de requisitos define qué debe hacer el producto y por qué. Es la base para un desarrollo alineado a las necesidades del usuario.");
 
     if (any(["estimación", "estimacion", "resource estimation"]))
-      return enrich("Las estimaciones permiten prever tiempos y recursos. Aunque nunca son exactas, ayudan a tomar decisiones realistas y evitar sobrecarga del equipo.");
+      return enrich(
+          "Las estimaciones permiten prever tiempos y recursos. Aunque nunca son exactas, ayudan a tomar decisiones realistas y evitar sobrecarga del equipo.");
 
     if (any(["cronograma", "timeline", "schedule", "hito", "milestone"]))
-      return enrich("Es una representación gráfica, ordenada y esquemática de eventos, generalmente venideros. Un cronograma bien definido organiza entregas, prioridades y dependencias es clave para coordinar equipos y evitar bloqueos.");
+      return enrich(
+          "Es una representación gráfica, ordenada y esquemática de eventos, generalmente venideros. Un cronograma bien definido organiza entregas, prioridades y dependencias es clave para coordinar equipos y evitar bloqueos.");
 
     if (any(["riesgo", "risk management"]))
-      return enrich("La gestión de riesgos identifica amenazas potenciales y crea planes de mitigación antes de que se conviertan en problemas reales.");
+      return enrich(
+          "La gestión de riesgos identifica amenazas potenciales y crea planes de mitigación antes de que se conviertan en problemas reales.");
 
     if (any(["plan de proyecto", "project plan"]))
-      return enrich("Un plan de proyecto sólido describe objetivos, alcance, recursos, cronograma, roles, riesgos y canales de comunicación.");
+      return enrich(
+          "Un plan de proyecto sólido describe objetivos, alcance, recursos, cronograma, roles, riesgos y canales de comunicación.");
 
     if (any(["comunicación", "comunicacion", "communication"]))
-      return enrich("Esto es muy importante, la comunicación efectiva evita malentendidos y reduce retrabajo. En desarrollo, la claridad es tan importante como el código.");
+      return enrich(
+          "Esto es muy importante, la comunicación efectiva evita malentendidos y reduce retrabajo. En desarrollo, la claridad es tan importante como el código.");
 
-    if (any(["herramienta", "management tool", "jira", "trello", "asana", "notion"]))
-      return enrich("Herramientas recomendadas: Jira para proyectos ágiles, Trello para equipos pequeños, Asana para gestión visual y Notion para documentación integrada.");
+    if (any([
+      "herramienta",
+      "management tool",
+      "jira",
+      "trello",
+      "asana",
+      "notion"
+    ]))
+      return enrich(
+          "Herramientas recomendadas: Jira para proyectos ágiles, Trello para equipos pequeños, Asana para gestión visual y Notion para documentación integrada.");
 
     if (any(["control de versiones", "version control", "git"]))
-      return enrich("Git es un sistema de control de versiones distribuido, lo que significa que un clon local del proyecto es un repositorio de control de versiones completo. Git permite gestionar cambios, colaborar sin conflictos y mantener un historial claro del proyecto. Es esencial en cualquier equipo moderno.");
+      return enrich(
+          "Git es un sistema de control de versiones distribuido, lo que significa que un clon local del proyecto es un repositorio de control de versiones completo. Git permite gestionar cambios, colaborar sin conflictos y mantener un historial claro del proyecto. Es esencial en cualquier equipo moderno.");
 
     // DISEÑO
-    if (any(["diseño modular", "diseno modular", "modular design", "arquitectura limpia", "clean architecture"]))
-      return enrich("Un diseño modular separa responsabilidades y reduce el acoplamiento. Clean Architecture organiza capas para facilitar mantenimiento y pruebas.");
+    if (any([
+      "diseño modular",
+      "diseno modular",
+      "modular design",
+      "arquitectura limpia",
+      "clean architecture"
+    ]))
+      return enrich(
+          "Un diseño modular separa responsabilidades y reduce el acoplamiento. Clean Architecture organiza capas para facilitar mantenimiento y pruebas.");
 
-    if (any(["orientación a objetos", "orientacion a objetos", "object-oriented", "oop", "orientada a objetos"]))
-      return enrich("La programación orientada a objetos usa conceptos como encapsulación, herencia y polimorfismo para modelar sistemas más expresivos y reutilizables.");
+    if (any([
+      "orientación a objetos",
+      "orientacion a objetos",
+      "object-oriented",
+      "oop",
+      "orientada a objetos"
+    ]))
+      return enrich(
+          "La programación orientada a objetos usa conceptos como encapsulación, herencia y polimorfismo para modelar sistemas más expresivos y reutilizables.");
 
-    if (any(["responsabilidad única", "responsabilidad unica", "single responsibility", "srp"]))
-      return enrich("El principio SRP indica que una clase debe tener una sola razón de cambio. Evita clases 'gigantes' y facilita pruebas.");
+    if (any([
+      "responsabilidad única",
+      "responsabilidad unica",
+      "single responsibility",
+      "srp"
+    ]))
+      return enrich(
+          "El principio SRP indica que una clase debe tener una sola razón de cambio. Evita clases 'gigantes' y facilita pruebas.");
 
-    if (any(["patrón de diseño", "patron de diseño", "patron de diseno", "design pattern", "mvc", "mvvm"]))
-      return enrich("Los patrones de diseño ofrecen soluciones probadas a problemas comunes. Ejemplos: Singleton, Factory, Observer, MVC y MVVM.");
+    if (any([
+      "patrón de diseño",
+      "patron de diseño",
+      "patron de diseno",
+      "design pattern",
+      "mvc",
+      "mvvm"
+    ]))
+      return enrich(
+          "Los patrones de diseño ofrecen soluciones probadas a problemas comunes. Ejemplos: Singleton, Factory, Observer, MVC y MVVM.");
 
     if (any(["uml"]))
-      return enrich("Los diagramas UML ayudan a visualizar estructuras, interacciones y comportamientos. Son útiles para documentar y alinear al equipo.");
+      return enrich(
+          "Los diagramas UML ayudan a visualizar estructuras, interacciones y comportamientos. Son útiles para documentar y alinear al equipo.");
 
     if (any(["reutilización", "reutilizacion", "reusability"]))
-      return enrich("La reutilización reduce duplicación y acelera el desarrollo. Componentes bien diseñados se convierten en piezas reutilizables.");
+      return enrich(
+          "La reutilización reduce duplicación y acelera el desarrollo. Componentes bien diseñados se convierten en piezas reutilizables.");
 
     if (any(["centrado en el usuario", "user-centered", "ux", "ui"]))
-      return enrich("El diseño centrado en el usuario prioriza usabilidad, accesibilidad y claridad. Una buena experiencia simplifica la curva de aprendizaje.");
+      return enrich(
+          "El diseño centrado en el usuario prioriza usabilidad, accesibilidad y claridad. Una buena experiencia simplifica la curva de aprendizaje.");
 
     if (any(["seguridad por diseño", "security by design"]))
-      return enrich("Security by Design implica considerar riesgos desde el inicio, incluyendo validaciones, cifrado y manejo seguro de datos.");
+      return enrich(
+          "Security by Design implica considerar riesgos desde el inicio, incluyendo validaciones, cifrado y manejo seguro de datos.");
 
     // CODIFICACIÓN
     if (any(["solid"]))
-      return enrich("SOLID es un conjunto de principios que facilita mantener, escalar y extender el código sin romper lo existente.");
+      return enrich(
+          "SOLID es un conjunto de principios que facilita mantener, escalar y extender el código sin romper lo existente.");
 
     if (any(["dry", "don’t repeat yourself", "dont repeat yourself"]))
-      return enrich("DRY promueve evitar duplicación. Si copias código, probablemente hay un componente que deberías abstraer.");
+      return enrich(
+          "DRY promueve evitar duplicación. Si copias código, probablemente hay un componente que deberías abstraer.");
 
     if (any(["kiss", "keep it simple", "simple"]))
-      return enrich("KISS nos recuerda que las mejores soluciones suelen ser las más simples. Evita complejidad innecesaria.");
+      return enrich(
+          "KISS nos recuerda que las mejores soluciones suelen ser las más simples. Evita complejidad innecesaria.");
 
     if (any(["yagni"]))
-      return enrich("YAGNI es una filosofía de desarrollo de software que consiste en que no se debe agregar nunca una funcionalidad excepto cuando sea necesaria, dice: no construyas algo hasta que realmente lo necesites. Evita sobreingeniería.");
+      return enrich(
+          "YAGNI es una filosofía de desarrollo de software que consiste en que no se debe agregar nunca una funcionalidad excepto cuando sea necesaria, dice: no construyas algo hasta que realmente lo necesites. Evita sobreingeniería.");
 
     if (any(["refactorización", "refactorizacion", "refactoring"]))
-      return enrich("Refactorizar mejora la estructura interna sin cambiar el comportamiento externo. Es clave para mantener la salud del código.");
+      return enrich(
+          "Refactorizar mejora la estructura interna sin cambiar el comportamiento externo. Es clave para mantener la salud del código.");
 
     if (any(["legibilidad", "readability", "naming"]))
-      return enrich("Un código claro, con buenos nombres y estructura lógica, cuesta menos de mantener y reduce errores.");
+      return enrich(
+          "Un código claro, con buenos nombres y estructura lógica, cuesta menos de mantener y reduce errores.");
 
     if (any(["comentario", "comment"]))
-      return enrich("Los comentarios deben explicar la intención, no describir lo obvio. Buen código se entiende solo, los comentarios complementan.");
+      return enrich(
+          "Los comentarios deben explicar la intención, no describir lo obvio. Buen código se entiende solo, los comentarios complementan.");
 
     if (any(["revisión de código", "revision de codigo", "code review"]))
-      return enrich("Las code reviews detectan errores temprano, comparten conocimiento y fortalecen la calidad técnica del equipo.");
+      return enrich(
+          "Las code reviews detectan errores temprano, comparten conocimiento y fortalecen la calidad técnica del equipo.");
 
     if (any(["ci", "cd", "continuous integration", "continuous deployment"]))
-      return enrich("CI/CD automatiza compilación, pruebas y despliegues. Reduce riesgos y acelera el ciclo de entrega.");
+      return enrich(
+          "CI/CD automatiza compilación, pruebas y despliegues. Reduce riesgos y acelera el ciclo de entrega.");
 
     // PRUEBAS
     if (any(["prueba unitaria", "unit test", "pruebas unitarias"]))
-      return enrich("Las pruebas unitarias validan piezas pequeñas del sistema. Son rápidas y ayudan a detectar fallos desde el inicio.");
+      return enrich(
+          "Las pruebas unitarias validan piezas pequeñas del sistema. Son rápidas y ayudan a detectar fallos desde el inicio.");
 
     if (any(["integración", "integracion", "integration test"]))
-      return enrich("Las pruebas de integración verifican cómo interactúan módulos distintos entre sí.");
+      return enrich(
+          "Las pruebas de integración verifican cómo interactúan módulos distintos entre sí.");
 
     if (any(["sistema", "system test"]))
-      return enrich("Las pruebas de sistema validan el comportamiento completo en un entorno similar al real.");
+      return enrich(
+          "Las pruebas de sistema validan el comportamiento completo en un entorno similar al real.");
 
     if (any(["aceptación", "aceptacion", "acceptance test"]))
-      return enrich("Las pruebas de aceptación confirman que el software cumple los requisitos del usuario.");
+      return enrich(
+          "Las pruebas de aceptación confirman que el software cumple los requisitos del usuario.");
 
-    if (any(["automatizada", "automated test", "automatizacion","automatización","DevOps"]))
-      return enrich("Las pruebas automatizadas aceleran el feedback y permiten ejecutar cientos de validaciones en segundos. En la metodología DevOps, trabajan como un equipo con un conjunto de herramientas y prácticas compartidas.");
+    if (any([
+      "automatizada",
+      "automated test",
+      "automatizacion",
+      "automatización",
+      "DevOps"
+    ]))
+      return enrich(
+          "Las pruebas automatizadas aceleran el feedback y permiten ejecutar cientos de validaciones en segundos. En la metodología DevOps, trabajan como un equipo con un conjunto de herramientas y prácticas compartidas.");
 
-    if (any(["rendimiento", "performance", "carga", "load"]))
-      return enrich("Las pruebas de rendimiento verifican tiempos de respuesta; las de carga miden estabilidad bajo estrés.");
+    if (any(["rendimiento", "performance", "carga", "load", "pruebas"]))
+      return enrich(
+          "Las pruebas de rendimiento verifican tiempos de respuesta; las de carga miden estabilidad bajo estrés.");
 
     if (any(["seguridad", "security"]))
-      return enrich("Las pruebas de seguridad identifican vulnerabilidades como inyecciones, accesos indebidos o configuraciones inseguras.");
+      return enrich(
+          "Las pruebas de seguridad identifican vulnerabilidades como inyecciones, accesos indebidos o configuraciones inseguras.");
 
     if (any(["usabilidad", "usability", "ux"]))
-      return enrich("Las pruebas de usabilidad evalúan qué tan fácil es usar el producto y qué tan satisfecho queda el usuario.");
+      return enrich(
+          "Las pruebas de usabilidad evalúan qué tan fácil es usar el producto y qué tan satisfecho queda el usuario.");
 
     if (any(["cobertura", "coverage"]))
-      return enrich("La cobertura indica cuánto del código ha sido ejecutado por pruebas; no es garantía de calidad, pero sí una métrica útil.");
+      return enrich(
+          "La cobertura indica cuánto del código ha sido ejecutado por pruebas; no es garantía de calidad, pero sí una métrica útil.");
 
     if (any(["regresión", "regresion", "regression"]))
-      return enrich("Las pruebas de regresión aseguran que nuevas modificaciones no rompan funcionalidades existentes.");
+      return enrich(
+          "Las pruebas de regresión aseguran que nuevas modificaciones no rompan funcionalidades existentes.");
 
     // GESTIÓN Y MEJORA CONTINUA
     if (any(["retrospectiva", "retrospective"]))
-      return enrich("Las retrospectivas permiten aprender del proceso y ajustar para mejorar en el siguiente ciclo.");
+      return enrich(
+          "Las retrospectivas permiten aprender del proceso y ajustar para mejorar en el siguiente ciclo.");
 
     if (any(["métrica", "metrica", "kpi", "indicador"]))
-      return enrich("Las métricas y KPIs ayudan a medir progreso, calidad y eficiencia. Bien usadas, guían decisiones objetivas.");
+      return enrich(
+          "Las métricas y KPIs ayudan a medir progreso, calidad y eficiencia. Bien usadas, guían decisiones objetivas.");
 
     if (any(["feedback"]))
-      return enrich("El feedback continuo mejora la calidad del software y ayuda al equipo a aprender y crecer.");
+      return enrich(
+          "El feedback continuo mejora la calidad del software y ayuda al equipo a aprender y crecer.");
 
     if (any(["auditoría", "auditoria", "audit"]))
-      return enrich("Las auditorías de código revisan estándares, seguridad y cumplimiento. Son una forma de garantizar consistencia técnica.");
+      return enrich(
+          "Las auditorías de código revisan estándares, seguridad y cumplimiento. Son una forma de garantizar consistencia técnica.");
 
     if (any(["qa", "control de calidad", "Testing", "testing"]))
-      return enrich("El testing es una prueba que consiste en analizar si un software o programa informático funciona correctamente. QA se encarga de asegurar que el software cumpla con los estándares acordados. No es solo probar: es prevenir defectos.");
+      return enrich(
+          "El testing es una prueba que consiste en analizar si un software o programa informático funciona correctamente. QA se encarga de asegurar que el software cumpla con los estándares acordados. No es solo probar: es prevenir defectos.");
 
     if (any(["integridad", "integrity", "compliance"]))
-      return enrich("La integridad y el cumplimiento garantizan que el sistema opere de forma confiable y en línea con regulaciones.");
+      return enrich(
+          "La integridad y el cumplimiento garantizan que el sistema opere de forma confiable y en línea con regulaciones.");
 
     // CONCLUSIÓN
     if (any(["usuario final", "end user", "customer"]))
-      return enrich("Buenas prácticas, diseño claro y pruebas adecuadas impactan directamente en la satisfacción del usuario.");
+      return enrich(
+          "Buenas prácticas, diseño claro y pruebas adecuadas impactan directamente en la satisfacción del usuario.");
 
     if (any(["actualizado", "update", "trend"]))
-      return enrich("Estar al día con herramientas, patrones y tecnologías fomenta innovación y competitividad.");
+      return enrich(
+          "Estar al día con herramientas, patrones y tecnologías fomenta innovación y competitividad.");
 
     if (any(["no aplicar", "bad practices", "consecuencias" "malas"]))
-      return enrich("No seguir buenas prácticas puede generar deuda técnica, errores frecuentes y costos elevados de mantenimiento.");
+      return enrich(
+          "No seguir buenas prácticas puede generar deuda técnica, errores frecuentes y costos elevados de mantenimiento.");
 
     if (any(["código limpio", "codigo limpio", "Clean Code", "clean code"]))
-      return enrich("Código limpio es un término usado para describir código de computadoras que es fácil de leer, entender y mantener. Código limpio se escribe de una manera que lo hace simple, conciso y expresivo.");
+      return enrich(
+          "Código limpio es un término usado para describir código de computadoras que es fácil de leer, entender y mantener. Código limpio se escribe de una manera que lo hace simple, conciso y expresivo.");
 
     if (any(["TDD", "Test Driven Development", "desarrollo basado", "guiado"]))
-      return enrich("El Test-Driven Development (TDD), o Desarrollo Guiado por Pruebas, es una metodología de desarrollo de software que ha ganado mucha popularidad en los últimos años. Se centra en la creación de pruebas unitarias antes de escribir el código que se pretende probar. Este enfoque, aunque inicialmente puede parecer contraintuitivo, ofrece numerosos beneficios en términos de calidad del código, mantenibilidad y reducción de errores.");
+      return enrich(
+          "El Test-Driven Development (TDD), o Desarrollo Guiado por Pruebas, es una metodología de desarrollo de software que ha ganado mucha popularidad en los últimos años. Se centra en la creación de pruebas unitarias antes de escribir el código que se pretende probar. Este enfoque, aunque inicialmente puede parecer contraintuitivo, ofrece numerosos beneficios en términos de calidad del código, mantenibilidad y reducción de errores.");
 
     if (any(["Planificación ", "gestion", "gestión", "planificación"]))
-      return enrich("La planificación es el proceso de definir los objetivos del proyecto, identificar las tareas necesarias para alcanzar esos objetivos, asignar recursos y establecer un cronograma. Es importante tener en cuenta factores como los requisitos del cliente, las limitaciones de tiempo y los recursos disponibles. Una buena planificación garantiza que todas las partes involucradas estén alineadas y tengan claro qué se espera de ellos.");
+      return enrich(
+          "La planificación es el proceso de definir los objetivos del proyecto, identificar las tareas necesarias para alcanzar esos objetivos, asignar recursos y establecer un cronograma. Es importante tener en cuenta factores como los requisitos del cliente, las limitaciones de tiempo y los recursos disponibles. Una buena planificación garantiza que todas las partes involucradas estén alineadas y tengan claro qué se espera de ellos.");
 
     if (any(["microservicio", "microservicios", "microservice"]))
-      return enrich("La arquitectura de microservicios divide una aplicación en componentes pequeños, independientes y desplegables por separado. Esto permite escalabilidad granular, despliegues rápidos y mayor resiliencia.");
+      return enrich(
+          "La arquitectura de microservicios divide una aplicación en componentes pequeños, independientes y desplegables por separado. Esto permite escalabilidad granular, despliegues rápidos y mayor resiliencia.");
 
     if (any(["docker", "contenedor", "container"]))
-      return enrich("Docker permite empaquetar aplicaciones junto con sus dependencias en contenedores ligeros y reproducibles. Facilita despliegues consistentes entre entornos.");
+      return enrich(
+          "Docker permite empaquetar aplicaciones junto con sus dependencias en contenedores ligeros y reproducibles. Facilita despliegues consistentes entre entornos.");
 
     if (any(["kubernetes", "k8s"]))
-      return enrich("Kubernetes es un orquestador de contenedores que gestiona despliegues, escalado automático y autorecuperación. Es esencial para arquitecturas modernas distribuidas.");
+      return enrich(
+          "Kubernetes es un orquestador de contenedores que gestiona despliegues, escalado automático y autorecuperación. Es esencial para arquitecturas modernas distribuidas.");
 
     if (any(["nosql", "mongo", "mongodb", "base de datos no relacional"]))
-      return enrich("Las bases NoSQL manejan datos no estructurados y permiten escalabilidad horizontal. Son ideales para grandes volúmenes con esquemas flexibles.");
+      return enrich(
+          "Las bases NoSQL manejan datos no estructurados y permiten escalabilidad horizontal. Son ideales para grandes volúmenes con esquemas flexibles.");
 
     if (any(["sql", "postgres", "mysql", "consultas"]))
-      return enrich("Las bases relacionales organizan datos en tablas y permiten consultas complejas mediante SQL. Son confiables para sistemas con integridad referencial.");
+      return enrich(
+          "Las bases relacionales organizan datos en tablas y permiten consultas complejas mediante SQL. Son confiables para sistemas con integridad referencial.");
 
     if (any(["indice", "index", "performance db"]))
-      return enrich("La indexación acelera búsquedas en bases de datos creando estructuras optimizadas. Es clave para mejorar el rendimiento en tablas grandes.");
+      return enrich(
+          "La indexación acelera búsquedas en bases de datos creando estructuras optimizadas. Es clave para mejorar el rendimiento en tablas grandes.");
 
     if (any(["oauth", "jwt", "token", "autenticacion"]))
-      return enrich("OAuth y JWT son mecanismos modernos para autenticar usuarios y autorizar accesos. Permiten sesiones seguras sin almacenar contraseñas en el cliente.");
+      return enrich(
+          "OAuth y JWT son mecanismos modernos para autenticar usuarios y autorizar accesos. Permiten sesiones seguras sin almacenar contraseñas en el cliente.");
 
     if (any(["cifrado", "encriptacion", "aes", "rsa"]))
-      return enrich("El cifrado protege datos mediante algoritmos como AES o RSA. Se usa para resguardar información sensible en tránsito o almacenamiento.");
+      return enrich(
+          "El cifrado protege datos mediante algoritmos como AES o RSA. Se usa para resguardar información sensible en tránsito o almacenamiento.");
 
     if (any(["iac", "terraform", "cloudformation"]))
-      return enrich("Infrastructure as Code permite definir infraestructura mediante archivos declarativos. Facilita reproducibilidad, versionado y despliegues confiables.");
+      return enrich(
+          "Infrastructure as Code permite definir infraestructura mediante archivos declarativos. Facilita reproducibilidad, versionado y despliegues confiables.");
 
     if (any(["logging", "logs", "monitoring", "observabilidad"]))
-      return enrich("La observabilidad incluye métricas, logs y trazas para entender el comportamiento del sistema en producción y detectar problemas rápido.");
+      return enrich(
+          "La observabilidad incluye métricas, logs y trazas para entender el comportamiento del sistema en producción y detectar problemas rápido.");
 
     if (any(["machine learning", "ml", "modelo predictivo"]))
-      return enrich("Machine Learning permite crear modelos que aprenden patrones a partir de datos. Se utiliza para predicciones, clasificación e inteligencia aplicada.");
+      return enrich(
+          "Machine Learning permite crear modelos que aprenden patrones a partir de datos. Se utiliza para predicciones, clasificación e inteligencia aplicada.");
 
     if (any(["big data", "hadoop", "spark"]))
-      return enrich("Big Data trabaja con volúmenes masivos de información mediante sistemas distribuidos. Frameworks como Spark permiten procesamiento a gran escala.");
+      return enrich(
+          "Big Data trabaja con volúmenes masivos de información mediante sistemas distribuidos. Frameworks como Spark permiten procesamiento a gran escala.");
 
     if (any(["neuronal", "neuronales", "deep learning"]))
-      return enrich("Las redes neuronales imitan el funcionamiento del cerebro para resolver problemas complejos como visión artificial o procesamiento del lenguaje.");
+      return enrich(
+          "Las redes neuronales imitan el funcionamiento del cerebro para resolver problemas complejos como visión artificial o procesamiento del lenguaje.");
 
     if (any(["cloud", "nube", "aws", "azure", "gcp"]))
-      return enrich("El cómputo en la nube ofrece recursos escalables bajo demanda. Proveedores como AWS, Azure y GCP facilitan despliegues ágiles y globales.");
+      return enrich(
+          "El cómputo en la nube ofrece recursos escalables bajo demanda. Proveedores como AWS, Azure y GCP facilitan despliegues ágiles y globales.");
 
     if (any(["serverless", "lambda", "functions"]))
-      return enrich("Serverless permite ejecutar código sin gestionar servidores. Se paga solo por uso y es ideal para tareas event-driven.");
+      return enrich(
+          "Serverless permite ejecutar código sin gestionar servidores. Se paga solo por uso y es ideal para tareas event-driven.");
 
     if (any(["design thinking", "innovacion", "prototipo"]))
-      return enrich("Design Thinking impulsa soluciones centradas en el usuario mediante empatía, ideación y prototipado rápido.");
+      return enrich(
+          "Design Thinking impulsa soluciones centradas en el usuario mediante empatía, ideación y prototipado rápido.");
 
     if (any(["roadmap", "estrategia de producto"]))
-      return enrich("Un roadmap define la evolución del producto a mediano plazo. Prioriza iniciativas según valor, impacto y necesidades del mercado.");
+      return enrich(
+          "Un roadmap define la evolución del producto a mediano plazo. Prioriza iniciativas según valor, impacto y necesidades del mercado.");
 
     if (any(["rest", "api", "endpoint", "swagger"]))
-      return enrich("Una API REST organiza recursos mediante métodos HTTP. Es un estándar para integrar servicios de forma simple y escalable.");
+      return enrich(
+          "Una API REST organiza recursos mediante métodos HTTP. Es un estándar para integrar servicios de forma simple y escalable.");
 
     if (any(["graphql", "consulta graphql"]))
-      return enrich("GraphQL permite solicitar solo los datos necesarios a través de un único endpoint. Reduce sobrecarga y mejora eficiencia.");
+      return enrich(
+          "GraphQL permite solicitar solo los datos necesarios a través de un único endpoint. Reduce sobrecarga y mejora eficiencia.");
 
     if (any(["websocket", "tiempo real", "socket"]))
-      return enrich("WebSockets habilitan comunicación bidireccional en tiempo real entre cliente y servidor. Son ideales para chats, juegos o dashboards.");
+      return enrich(
+          "WebSockets habilitan comunicación bidireccional en tiempo real entre cliente y servidor. Son ideales para chats, juegos o dashboards.");
 
     if (any(["gestión de usuarios", "crud usuarios", "admin usuarios"]))
-      return enrich("La gestión de usuarios permite registrar, editar, eliminar y autenticar usuarios dentro del sistema. Asegura control de acceso y organización de perfiles.");
+      return enrich(
+          "La gestión de usuarios permite registrar, editar, eliminar y autenticar usuarios dentro del sistema. Asegura control de acceso y organización de perfiles.");
 
     if (any(["carrito", "carrito de compras", "shopping cart"]))
-      return enrich("El caso de uso de carrito de compras maneja la selección de productos, actualización de cantidades y preparación para pago. Simula un flujo típico de comercio electrónico.");
+      return enrich(
+          "El caso de uso de carrito de compras maneja la selección de productos, actualización de cantidades y preparación para pago. Simula un flujo típico de comercio electrónico.");
 
     if (any(["gestión de tareas", "to-do", "tasks"]))
-      return enrich("La gestión de tareas permite crear, actualizar y marcar actividades como completadas. Ideal para organizar procesos y flujos personales o de equipo.");
+      return enrich(
+          "La gestión de tareas permite crear, actualizar y marcar actividades como completadas. Ideal para organizar procesos y flujos personales o de equipo.");
 
     if (any(["clases"]))
-      return enrich("El diagrama de clases modela la estructura del sistema: clases, atributos, métodos y relaciones. Es fundamental para diseñar arquitectura orientada a objetos.");
+      return enrich(
+          "El diagrama de clases modela la estructura del sistema: clases, atributos, métodos y relaciones. Es fundamental para diseñar arquitectura orientada a objetos.");
 
     if (any(["secuencia"]))
-      return enrich("El diagrama de secuencia muestra cómo los objetos interactúan en el tiempo mediante mensajes. Es útil para entender flujos paso a paso.");
+      return enrich(
+          "El diagrama de secuencia muestra cómo los objetos interactúan en el tiempo mediante mensajes. Es útil para entender flujos paso a paso.");
 
     if (any(["actividades"]))
-      return enrich("El diagrama de actividades representa flujos de trabajo, decisiones y paralelismos. Ideal para procesos y lógica de negocio.");
+      return enrich(
+          "El diagrama de actividades representa flujos de trabajo, decisiones y paralelismos. Ideal para procesos y lógica de negocio.");
 
     if (any(["casos de uso"]))
-      return enrich("El diagrama de casos de uso muestra los actores e interacciones principales del sistema. Excelente para definir requisitos y alcance.");
+      return enrich(
+          "El diagrama de casos de uso muestra los actores e interacciones principales del sistema. Excelente para definir requisitos y alcance.");
 
     if (any(["estados"]))
-      return enrich("El diagrama de estados modela cómo un objeto cambia entre estados según eventos. Es útil para sistemas dinámicos o dependientes de condiciones.");
+      return enrich(
+          "El diagrama de estados modela cómo un objeto cambia entre estados según eventos. Es útil para sistemas dinámicos o dependientes de condiciones.");
 
     if (any(["editor" "crear" "dibujar"]))
-      return enrich("Puedes acceder al editor de diagramas UML desde la pantalla de Ejemplos. Te permite crear y editar diagramas directamente dentro de la aplicación.");
+      return enrich(
+          "Puedes acceder al editor de diagramas UML desde la pantalla de Ejemplos. Te permite crear y editar diagramas directamente dentro de la aplicación.");
 
     if (any(["perfil", "configuración perfil", "editar perfil"]))
-      return enrich("La pantalla de Perfil te permite modificar tu nombre, progreso y ajustes de la app. Es un panel personal donde controlas tu experiencia.");
+      return enrich(
+          "La pantalla de Perfil te permite modificar tu nombre, progreso y ajustes de la app. Es un panel personal donde controlas tu experiencia.");
 
     if (any(["teoria", "contenido teórico", "aprendizaje"]))
-      return enrich("La pantalla de Teoría ofrece explicaciones claras sobre buenas prácticas, arquitectura, patrones, UML y más. Todo el contenido está organizado por temas.");
+      return enrich(
+          "La pantalla de Teoría ofrece explicaciones claras sobre buenas prácticas, arquitectura, patrones, UML y más. Todo el contenido está organizado por temas.");
 
     if (any(["ejemplos", "ejemplos de código", "codigo correcto"]))
-      return enrich("La pantalla de Ejemplos muestra código correcto e incorrecto con explicaciones. Desde allí también puedes abrir el editor UML.");
+      return enrich(
+          "La pantalla de Ejemplos muestra código correcto e incorrecto con explicaciones. Desde allí también puedes abrir el editor UML.");
 
     if (any(["quiz", "preguntas", "evaluacion"]))
-      return enrich("Los quizzes por niveles evalúan tu aprendizaje y desbloquean contenido adicional. Te ayudan a reforzar conceptos mientras avanzas.");
+      return enrich(
+          "Los quizzes por niveles evalúan tu aprendizaje y desbloquean contenido adicional. Te ayudan a reforzar conceptos mientras avanzas.");
 
     if (any(["minijuego", "juego", "ping pong", "run game"]))
-      return enrich("Los minijuegos como Ping Pong y Run Game se desbloquean al ganar puntos en los quizzes. Son una forma divertida de reforzar conceptos.");
+      return enrich(
+          "Los minijuegos como Ping Pong y Run Game se desbloquean al ganar puntos en los quizzes. Son una forma divertida de reforzar conceptos.");
 
     if (any(["asistente", "ayuda", "virtual assistant"]))
-      return enrich("El asistente virtual responde preguntas, explica temas y te guía dentro de la app. Puede reconocer palabras clave para darte respuestas directas.");
+      return enrich(
+          "El asistente virtual responde preguntas, explica temas y te guía dentro de la app. Puede reconocer palabras clave para darte respuestas directas.");
 
     // DEFAULT
-    return enrich("No tengo una respuesta directa para ese tema, pero puedo ayudarte con conceptos como SOLID, Agile, Testing, arquitectura o buenas prácticas.");
+    return enrich(
+        "No tengo una respuesta directa para ese tema, pero puedo ayudarte con conceptos como SOLID, Agile, Testing, arquitectura o buenas prácticas.");
   }
-
-
-
 
   // INTERFAZ
   Widget _buildMessage(ChatMessage msg) {
     final isBot = msg.sender == Sender.bot;
     final bubbleColor =
-    isBot ? const Color(0xFF0078D7) : const Color(0xFF2E2E2E);
+        isBot ? const Color(0xFF0078D7) : const Color(0xFF2E2E2E);
     final textColor = Colors.white;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
       child: Row(
         mainAxisAlignment:
-        isBot ? MainAxisAlignment.start : MainAxisAlignment.end,
+            isBot ? MainAxisAlignment.start : MainAxisAlignment.end,
         children: [
           if (isBot)
             CircleAvatar(
@@ -925,11 +1065,9 @@ class _AssistantScreenState extends State<AssistantScreen> {
           if (isBot) const SizedBox(width: 8),
           Flexible(
             child: Container(
-              padding:
-              const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
               decoration: BoxDecoration(
-                  color: bubbleColor,
-                  borderRadius: BorderRadius.circular(14)),
+                  color: bubbleColor, borderRadius: BorderRadius.circular(14)),
               child: Text(msg.text,
                   style: TextStyle(color: textColor, fontSize: 15)),
             ),
@@ -939,8 +1077,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
             CircleAvatar(
                 radius: 14,
                 backgroundColor: Colors.grey[700],
-                child: const Text('',
-                    style: TextStyle(color: Colors.white))),
+                child: const Text('', style: TextStyle(color: Colors.white))),
         ],
       ),
     );
@@ -957,8 +1094,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
               child: Image.asset(_avatarAsset, fit: BoxFit.cover)),
         ),
         const SizedBox(width: 8),
-        const Text("Escribiendo...",
-            style: TextStyle(color: Colors.white70)),
+        const Text("Escribiendo...", style: TextStyle(color: Colors.white70)),
       ],
     );
   }
@@ -976,7 +1112,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
               child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child:
-                  Image.asset(_avatarAsset, width: 36, fit: BoxFit.cover)),
+                      Image.asset(_avatarAsset, width: 36, fit: BoxFit.cover)),
             ),
             const SizedBox(width: 10),
             Text('Asistente (${_modo[0].toUpperCase()}${_modo.substring(1)})',
@@ -1007,7 +1143,6 @@ class _AssistantScreenState extends State<AssistantScreen> {
             },
           ),
         ],
-
       ),
       body: SafeArea(
         child: Column(
@@ -1026,8 +1161,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
             ),
             Container(
               color: const Color(0xFF0A0A0B),
-              padding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 children: [
                   Expanded(
@@ -1036,8 +1170,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
                         hintText: 'Escribe un mensaje....',
-                        hintStyle:
-                        const TextStyle(color: Colors.white54),
+                        hintStyle: const TextStyle(color: Colors.white54),
                         filled: true,
                         fillColor: const Color(0xFF171717),
                         border: OutlineInputBorder(
@@ -1197,7 +1330,7 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
                     child: CircleAvatar(
                       radius: 45,
                       backgroundImage:
-                      tempImg != null ? FileImage(File(tempImg!)) : null,
+                          tempImg != null ? FileImage(File(tempImg!)) : null,
                       child: tempImg == null
                           ? const Icon(Icons.camera_alt, size: 40)
                           : null,
@@ -1271,18 +1404,18 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
               // AVATAR
               profileImagePath != null
                   ? CircleAvatar(
-                radius: 50,
-                backgroundImage: FileImage(File(profileImagePath!)),
-              )
+                      radius: 50,
+                      backgroundImage: FileImage(File(profileImagePath!)),
+                    )
                   : CircleAvatar(
-                radius: 50,
-                backgroundColor: Colors.cyanAccent.withOpacity(0.2),
-                child: Icon(
-                  avatars[avatarIndex]["icon"],
-                  size: 50,
-                  color: Colors.cyanAccent,
-                ),
-              ),
+                      radius: 50,
+                      backgroundColor: Colors.cyanAccent.withOpacity(0.2),
+                      child: Icon(
+                        avatars[avatarIndex]["icon"],
+                        size: 50,
+                        color: Colors.cyanAccent,
+                      ),
+                    ),
 
               const SizedBox(height: 15),
               Text(
@@ -1303,7 +1436,7 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
                 ),
                 child: const Text(
                   "Esta es una app de apoyo para las buenas prácticas en la ingeniería de software. "
-                      "Aquí encontrarás teoría, ejemplos, evaluaciones y un asistente que te guiará.",
+                  "Aquí encontrarás teoría, ejemplos, evaluaciones y un asistente que te guiará.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
@@ -1323,7 +1456,7 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15)),
                   padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 ),
               ),
               const SizedBox(height: 30),
@@ -1331,16 +1464,29 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
 //  Enlace a la página web
               GestureDetector(
                 onTap: () async {
-                  final url = Uri.parse("https://tusitio.com");
-                  if (await canLaunchUrl(url)) {
-                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  final Uri url = Uri.parse(
+                      "https://victormanuel211.github.io/LearnUp_Web/");
+
+                  final bool launched = await launchUrl(
+                    url,
+                    mode: LaunchMode
+                        .externalApplication, // fuerza abrir navegador
+                  );
+
+                  if (!launched) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text("No se pudo abrir el enlace.")),
+                    );
                   }
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(15),
-                    border: Border.all(color: Colors.cyanAccent.withOpacity(0.6)),
+                    border:
+                        Border.all(color: Colors.cyanAccent.withOpacity(0.6)),
                     color: Colors.white.withOpacity(0.05),
                   ),
                   child: const Row(
@@ -1374,10 +1520,12 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
                   await launchUrl(email);
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(15),
-                    border: Border.all(color: Colors.cyanAccent.withOpacity(0.6)),
+                    border:
+                        Border.all(color: Colors.cyanAccent.withOpacity(0.6)),
                     color: Colors.white.withOpacity(0.05),
                   ),
                   child: const Row(
@@ -1405,7 +1553,6 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
   }
 }
 
-
 // GENERADOR DE USER ID AUTOMÁTICO
 class UserManager {
   static Future<String> getOrCreateUser() async {
@@ -1419,7 +1566,6 @@ class UserManager {
     return id;
   }
 }
-
 
 class TheoryScreen extends StatefulWidget {
   @override
@@ -1531,8 +1677,7 @@ class _TheoryScreenState extends State<TheoryScreen> {
     await prefs.setStringList('favoriteTopics', favorites);
   }
 
-
-  // Alternar favoritogbvh
+  // Alternar favoritos
   void _toggleFavorite(String topic) {
     setState(() {
       if (favorites.contains(topic)) {
@@ -1553,83 +1698,158 @@ class _TheoryScreenState extends State<TheoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Ordenar: favoritos primero
-    final sortedTopics = [
-      ...favorites,
-      ...topics.where((t) => !favorites.contains(t)).toList()
-    ];
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('conceptos_extra')
+          .where('activo', isEqualTo: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+// Los temas locales siempre se conservan.
+        final List<String> todosLosTemas = [...topics];
 
-    final filteredTopics = sortedTopics
-        .where((t) => t.toLowerCase().contains(searchQuery.toLowerCase()))
-        .toList();
+// Contenido de los temas nuevos descargados.
+        final Map<String, String> contenidoFirestore = {};
 
-    return Scaffold(
-      appBar: AppBar(title: const Text("Teoría")),
-      body: Column(
-        children: [
-          // Buscador
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              decoration: InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                hintText: 'Buscar tema...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+        if (snapshot.hasData) {
+          final documentos = snapshot.data!.docs.toList();
+
+// Orden opcional: primero los documentos con menor valor de "orden".
+          documentos.sort((a, b) {
+            final ordenA = a.data()['orden'];
+            final ordenB = b.data()['orden'];
+
+            final int valorA = ordenA is num ? ordenA.toInt() : 999999;
+            final int valorB = ordenB is num ? ordenB.toInt() : 999999;
+
+            return valorA.compareTo(valorB);
+          });
+
+          for (final documento in documentos) {
+            final datos = documento.data();
+            final titulo = datos['titulo'];
+            final contenido = datos['contenido'];
+
+            if (titulo is! String ||
+                contenido is! String ||
+                titulo.trim().isEmpty ||
+                contenido.trim().isEmpty) {
+              continue;
+            }
+
+            final tituloLimpio = titulo.trim();
+
+// Si el título ya existe localmente, no lo duplicamos.
+// Su contenido local seguirá teniendo prioridad.
+            if (!topics.contains(tituloLimpio)) {
+              if (!todosLosTemas.contains(tituloLimpio)) {
+                todosLosTemas.add(tituloLimpio);
+              }
+
+              contenidoFirestore[tituloLimpio] = contenido;
+            }
+          }
+        }
+
+// Favoritos primero, sin repetir ni mostrar favoritos antiguos.
+        final favoritosValidos =
+            favorites.where((tema) => todosLosTemas.contains(tema)).toList();
+
+        final sortedTopics = [
+          ...favoritosValidos,
+          ...todosLosTemas.where(
+            (tema) => !favoritosValidos.contains(tema),
+          ),
+        ];
+
+        final filteredTopics = sortedTopics
+            .where(
+              (tema) => tema.toLowerCase().contains(searchQuery.toLowerCase()),
+            )
+            .toList();
+
+        return Scaffold(
+          appBar: AppBar(title: const Text('Teoría')),
+          body: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextField(
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search),
+                    hintText: 'Buscar tema...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onChanged: (valor) {
+                    setState(() => searchQuery = valor);
+                  },
                 ),
               ),
-              onChanged: (v) => setState(() => searchQuery = v),
-            ),
-          ),
-
-          // Lista de temas
-          Expanded(
-            child: ListView.builder(
-              itemCount: filteredTopics.length,
-              itemBuilder: (context, index) {
-                final topic = filteredTopics[index];
-                final isFav = favorites.contains(topic);
-
-                return Card(
-                  margin: EdgeInsets.all(8),
-                  child: ListTile(
-                    title: Text(topic),
-                    leading: IconButton(
-                      icon: Icon(
-                        isFav ? Icons.star : Icons.star_border,
-                        color: isFav ? Colors.amber : Colors.grey,
-                      ),
-                      onPressed: () => _toggleFavorite(topic),
-                    ),
-                    trailing: Icon(Icons.arrow_forward_ios),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => TopicDetailScreen(topic: topic),
-                        ),
-                      );
-                    },
+              if (snapshot.hasError)
+                const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text(
+                    'No se pudieron actualizar los temas online. '
+                    'Se muestran los temas locales.',
                   ),
-                );
-              },
-            ),
-          )
-        ],
-      ),
+                ),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: filteredTopics.length,
+                  itemBuilder: (context, index) {
+                    final topic = filteredTopics[index];
+                    final isFav = favorites.contains(topic);
+
+                    return Card(
+                      margin: const EdgeInsets.all(8),
+                      child: ListTile(
+                        title: Text(topic),
+                        leading: IconButton(
+                          icon: Icon(
+                            isFav ? Icons.star : Icons.star_border,
+                            color: isFav ? Colors.amber : Colors.grey,
+                          ),
+                          onPressed: () => _toggleFavorite(topic),
+                        ),
+                        trailing: const Icon(Icons.arrow_forward_ios),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => TopicDetailScreen(
+                                topic: topic,
+                                contenidoOnline: contenidoFirestore[topic],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
 
-
 class TopicDetailScreen extends StatelessWidget {
   final String topic;
+  final String? contenidoOnline;
 
-  const TopicDetailScreen({required this.topic});
+  const TopicDetailScreen({
+    super.key,
+    required this.topic,
+    this.contenidoOnline,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final content = _getTopicContent(topic);
+    final content = contenidoOnline ?? _getTopicContent(topic);
 
     return Scaffold(
       appBar: AppBar(title: Text(topic)),
@@ -1648,8 +1868,7 @@ class TopicDetailScreen extends StatelessWidget {
     final matches = urlRegex.allMatches(text);
 
     if (matches.isEmpty) {
-      return Text(text,
-          style: TextStyle(fontSize: 16, height: 1.4));
+      return Text(text, style: TextStyle(fontSize: 16, height: 1.4));
     }
 
     final List<TextSpan> spans = [];
@@ -1693,7 +1912,7 @@ class TopicDetailScreen extends StatelessWidget {
 
   String _getTopicContent(String topic) {
     switch (topic) {
-    //  GENERALES
+      //  GENERALES
       case 'Buenas prácticas en desarrollo de software':
         return '''
 Título: Buenas prácticas en desarrollo de software
@@ -1824,7 +2043,7 @@ Herramientas o estrategias útiles:
 - Monitoreo de rendimiento y reportes de incidencias.
 ''';
 
-    //  PLANIFICACIÓN
+      //  PLANIFICACIÓN
       case 'Análisis de requisitos':
         return '''
 Título: Análisis de requisitos
@@ -1945,7 +2164,7 @@ Casos de uso según tamaño del proyecto:
 - Proyectos con dependencias complejas y planificación formal: Microsoft Project.
 ''';
 
-    //  DISEÑO
+      //  DISEÑO
       case 'Arquitectura de software':
         return '''
 Título: Arquitectura de software
@@ -2088,7 +2307,7 @@ Ejemplo de implementación práctica:
 - Librería de validación de formularios compartida entre distintos proyectos.
 ''';
 
-    //  CODIFICACIÓN
+      //  CODIFICACIÓN
       case 'Principios SOLID':
         return '''
 [Significado de cada principio]
@@ -2177,7 +2396,6 @@ Refactorizar es mejorar la estructura interna del código sin cambiar su comport
 - Integrar cambios frecuentemente.
 ''';
 
-
       case 'Comentarios y documentación':
         return '''
 [Importancia de documentar el código]
@@ -2195,7 +2413,6 @@ Refactorizar es mejorar la estructura interna del código sin cambiar su comport
 - Indicar complejidades ocultas.  
 - Describir parámetros o side-effects.
 ''';
-
 
       case 'Revisión de código (Code Review)':
         return '''
@@ -2218,7 +2435,6 @@ Refactorizar es mejorar la estructura interna del código sin cambiar su comport
 - Estándares más consistentes.
 ''';
 
-
       case 'Integración y despliegue continuo (CI/CD)':
         return '''
 [Concepto de CI/CD]
@@ -2236,7 +2452,6 @@ CD — Despliegue Continuo: automatizar despliegues en ambientes productivos o p
 - Feedback rápido.  
 - Mayor velocidad de entrega.
 ''';
-
 
       case 'Manejo de errores y excepciones':
         return '''
@@ -2258,7 +2473,6 @@ CD — Despliegue Continuo: automatizar despliegues en ambientes productivos o p
 - Implementar monitoreo y alertas.
 ''';
 
-
       case 'Optimización y eficiencia':
         return '''
 [Técnicas de optimización]
@@ -2277,7 +2491,6 @@ CD — Despliegue Continuo: automatizar despliegues en ambientes productivos o p
 - Optimizar solo cuando es necesario.  
 - Evitar microoptimizaciones prematuras.
 ''';
-
 
       case 'Entorno de desarrollo (IDE y herramientas)':
         return '''
@@ -2299,8 +2512,7 @@ CD — Despliegue Continuo: automatizar despliegues en ambientes productivos o p
 - Organizar el proyecto en carpetas claras.
 ''';
 
-
-    //  PRUEBAS
+      //  PRUEBAS
       case 'Pruebas unitarias':
         return '''
 Título: Principios SOLID
@@ -2450,7 +2662,7 @@ Ventajas de la automatización:
 - Feedback inmediato sobre fallos o problemas de integración.
 ''';
 
-    //  GESTIÓN Y MEJORA CONTINUA
+      //  GESTIÓN Y MEJORA CONTINUA
       case 'Retrospectivas y mejora continua':
         return '''
 Título: Retrospectivas y mejora continua
@@ -3331,17 +3543,17 @@ Título: Videos de apoyo
 Descripción: aqui tienes algunos videos que puedes  visitar si quieres mas Informacion:
 
 Videos:
--https://youtu.be/VCzlFblmvSE?si=r-tm2BtpbWCuyLYQ
+-Beunas practicas en la progranacion: "https://youtu.be/mXbav0RNs1U?si=pA0-ZuBJKsmWbvD-"
 
 ''';
 
       default:
         return 'Contenido en desarrollo para "$topic".';
-
     }
   }
 }
 
+/////////////////////////////////////////////////////////////////////////////////
 
 // Pantalla de ejemplos con buscador
 class ExamplesScreen extends StatefulWidget {
@@ -3356,444 +3568,611 @@ class _ExamplesScreenState extends State<ExamplesScreen> {
     'Fundamentales': [
       {
         'titulo': 'Ejemplo de mal código',
-        'codigo': 'int suma(a, b) { return a+b; }'
+        'codigo': 'int suma(a, b) { return a+b; }',
+        'explicacion':
+            'Es una mala práctica porque los parámetros no tienen tipos explícitos y la operación está escrita sin espacios, lo que reduce la legibilidad. En Dart moderno, los parámetros sin tipo se consideran dinámicos en este contexto y pueden provocar errores o dificultar el análisis estático.'
       },
       {
         'titulo': 'Ejemplo con buenas prácticas',
-        'codigo': 'int suma(int a, int b) {\n  return a + b;\n}'
+        'codigo': 'int suma(int a, int b) {\n  return a + b;\n}',
+        'explicacion':
+            'Es una buena práctica porque declara explícitamente que ambos parámetros son enteros y que la función devuelve un entero. Además, los espacios y la estructura del código facilitan la lectura y el mantenimiento.'
       },
       {
         'titulo': 'Variables sin tipo (mala práctica)',
-        'codigo': 'var x = 10;\nvar y = "20";\nprint(x + y); // Error en runtime'
+        'codigo': 'var x = 10;\nvar y = "20";\nprint(x + y);',
+        'explicacion':
+            'Aunque se utiliza var, Dart infiere el tipo de cada variable a partir de su valor inicial. Por eso, x es int e y es String. La operación x + y no es válida y Dart normalmente la detecta como un error de compilación o análisis estático, no como un error que necesariamente ocurre durante la ejecución.'
       },
       {
         'titulo': 'Tipado explícito (buena práctica)',
-        'codigo': 'int x = 10;\nint y = 20;\nprint(x + y);'
+        'codigo': 'int x = 10;\nint y = 20;\nprint(x + y);',
+        'explicacion':
+            'Es una buena práctica porque ambas variables son enteros y pueden sumarse correctamente. La declaración explícita facilita comprender la intención del código y permite detectar usos incompatibles de los tipos.'
       },
       {
         'titulo': 'Uso incorrecto de tipos dinámicos',
-        'codigo': 'dynamic n = "10";\nprint(n + 5); // Runtime error'
+        'codigo': 'dynamic n = "10";\nprint(n + 5);',
+        'explicacion':
+            'Es riesgoso porque dynamic permite asignar valores de distintos tipos y reduce las comprobaciones estáticas. En este caso, n contiene un String y se intenta sumarle un int. La operación no es válida y puede producir un error en tiempo de ejecución.'
       },
       {
         'titulo': 'Tipado fuerte para evitar errores',
-        'codigo': 'int n = 10;\nprint(n + 5);'
+        'codigo': 'int n = 10;\nprint(n + 5);',
+        'explicacion':
+            'Es una buena práctica porque n solo puede contener un entero y la suma con 5 es válida. El tipado permite detectar incompatibilidades antes de ejecutar el programa y hace más clara la intención del desarrollador.'
       },
     ],
-
     'Clean Code & Naming': [
       {
         'titulo': 'Mal Naming (mala práctica)',
-        'codigo': 'void p(x){print(x*0.21);} // ¿Qué hace esta función?'
+        'codigo': 'void p(x){print(x*0.21);} // ¿Qué hace esta función?',
+        'explicacion':
+            'Es una mala práctica porque el nombre p no describe la función y el parámetro x no explica qué dato recibe. Además, no se especifica el tipo del parámetro. Esto dificulta comprender el código sin tener que analizar su contenido. Un nombre descriptivo y un tipo explícito mejorarían su legibilidad.'
       },
       {
         'titulo': 'Buen Naming (Clean Code)',
-        'codigo': 'void printTax(double subtotal) {\n  print(subtotal * 0.21);\n}'
+        'codigo':
+            'void printTax(double subtotal) {\n  print(subtotal * 0.21);\n}',
+        'explicacion':
+            'Es una buena práctica porque printTax indica que la función imprime un impuesto y subtotal describe el dato recibido. El tipo double también aclara que se trabaja con un valor numérico decimal. Sin embargo, sería aún mejor documentar qué representa el 0.21 o definirlo como una constante, ya que parece ser una tasa de impuesto del 21 %.'
       },
       {
         'titulo': 'Naming confuso',
-        'codigo': 'bool f(String s){ return s.length > 5; } // ¿Qué evalúa?'
+        'codigo': 'bool f(String s){ return s.length > 5; } // ¿Qué evalúa?',
+        'explicacion':
+            'Es una mala práctica porque f y s son nombres demasiado generales. Aunque el tipo bool indica que el resultado será verdadero o falso, no permite saber qué condición se está evaluando. Esto obliga a leer la implementación para entender su propósito.'
       },
       {
         'titulo': 'Naming claro y expresivo',
-        'codigo': 'bool isValidUsername(String username){\n  return username.length > 5;\n}'
+        'codigo':
+            'bool isValidUsername(String username){\n  return username.length > 5;\n}',
+        'explicacion':
+            'Es una buena práctica porque isValidUsername expresa que la función evalúa si un nombre de usuario es válido y username identifica claramente el parámetro. No obstante, la regla implementada solo verifica que tenga más de cinco caracteres; para validar realmente un usuario podrían necesitarse otras condiciones.'
       },
       {
         'titulo': 'Nombre no expresivo',
-        'codigo': 'void calc(u){ print(u * 9 / 5 + 32); } // ¿Convierte qué?'
+        'codigo': 'void calc(u){ print(u * 9 / 5 + 32); } // ¿Convierte qué?',
+        'explicacion':
+            'Es una mala práctica porque calc no explica qué cálculo se realiza y u no indica qué representa el valor. La fórmula corresponde a la conversión de grados Celsius a Fahrenheit, pero el código no comunica esa intención mediante sus nombres. Además, el parámetro no tiene un tipo explícito.'
       },
       {
         'titulo': 'Nombre claro y semántico',
-        'codigo': 'void convertirCelsiusAFahrenheit(double celsius){\n  print(celsius * 9/5 + 32);\n}'
+        'codigo':
+            'void convertirCelsiusAFahrenheit(double celsius){\n  print(celsius * 9/5 + 32);\n}',
+        'explicacion':
+            'Es una buena práctica porque convertirCelsiusAFahrenheit describe la operación y celsius indica la unidad del dato recibido. El tipo double permite trabajar con temperaturas decimales. Como mejora adicional, la función podría devolver el resultado como double en lugar de imprimirlo, para que otras partes del programa puedan reutilizar la conversión.'
       },
     ],
-
     'Principios SOLID': [
       {
         'titulo': 'Mala práctica: SRP violado',
         'codigo':
-        'class UserService {\n  void saveUser(){}\n  void sendEmail(){}\n  void exportPDF(){}\n}'
+            'class UserService {\n  void saveUser(){}\n  void sendEmail(){}\n  void exportPDF(){}\n}'
       },
       {
         'titulo': 'Buena práctica: Aplicando SRP',
         'codigo':
-        'class UserRepository{}\nclass EmailService{}\nclass PdfExporter{}'
+            'class UserRepository{}\nclass EmailService{}\nclass PdfExporter{}'
       },
       {
         'titulo': 'Violación de OCP (mala práctica)',
         'codigo':
-        'class Payment {\n  void pay(String type){\n    if(type == "paypal"){}\n    if(type == "card"){}\n  }\n}'
+            'class Payment {\n  void pay(String type){\n    if(type == "paypal"){}\n    if(type == "card"){}\n  }\n}'
       },
       {
         'titulo': 'Aplicación de OCP con polimorfismo',
         'codigo':
-        'abstract class PaymentMethod{\n  void pay();\n}\nclass PayPal implements PaymentMethod{\n  void pay(){}\n}\nclass Card implements PaymentMethod{\n  void pay(){}\n}'
+            'abstract class PaymentMethod{\n  void pay();\n}\nclass PayPal implements PaymentMethod{\n  void pay(){}\n}\nclass Card implements PaymentMethod{\n  void pay(){}\n}'
       },
       {
         'titulo': 'Violación de LSP',
         'codigo':
-        'class Bird { void fly(){} }\nclass Penguin extends Bird { @override void fly(){} } // No debería'
+            'class Bird { void fly(){} }\nclass Penguin extends Bird { @override void fly(){} } // No debería'
       },
       {
         'titulo': 'Cumpliendo LSP',
         'codigo':
-        'abstract class Bird{}\nclass FlyingBird extends Bird{ void fly(){} }\nclass Penguin extends Bird{}'
+            'abstract class Bird{}\nclass FlyingBird extends Bird{ void fly(){} }\nclass Penguin extends Bird{}'
       },
     ],
-
-    'Manejo de errores': [
+    'Principios SOLID': [
       {
-        'titulo': 'Mal manejo de errores',
-        'codigo': 'int dividir(a,b){return a/b;} // Si b=0 explota'
+        'titulo': 'Mala práctica: SRP violado',
+        'codigo':
+            'class UserService {\n  void saveUser(){}\n  void sendEmail(){}\n  void exportPDF(){}\n}',
+        'explicacion':
+            'Viola el Principio de Responsabilidad Única (SRP) porque UserService reúne responsabilidades diferentes: guardar usuarios, enviar correos y exportar archivos PDF. Si cambia la forma de guardar datos, enviar correos o generar documentos, esta clase podría necesitar modificaciones por distintas razones. Esto dificulta su mantenimiento y sus pruebas.'
       },
       {
-        'titulo': 'Buen manejo con validación',
+        'titulo': 'Buena práctica: Aplicando SRP',
         'codigo':
-        'int dividir(int a,int b){\n  if(b==0) throw Exception("División inválida");\n  return a ~/ b;\n}'
+            'class UserRepository {}\nclass EmailService {}\nclass PdfExporter {}',
+        'explicacion':
+            'Aplica la idea del SRP al separar las responsabilidades en clases distintas. UserRepository se encargaría del acceso y almacenamiento de usuarios, EmailService del envío de correos y PdfExporter de la generación de PDF. Así, cada clase puede modificarse y probarse de manera más independiente. Para que el ejemplo sea funcional, habría que implementar sus métodos.'
       },
       {
-        'titulo': 'Ignorar excepciones (mala práctica)',
+        'titulo': 'Violación de OCP (mala práctica)',
         'codigo':
-        'try {\n  process();\n} catch (e) {\n  // vacío 😬\n}'
+            'class Payment {\n  void pay(String type){\n    if(type == "paypal"){}\n    if(type == "card"){}\n  }\n}',
+        'explicacion':
+            'Puede violar el Principio Abierto/Cerrado (OCP) porque la clase Payment necesita modificarse cada vez que se agrega un nuevo método de pago. A medida que aparecen más opciones, los condicionales pueden crecer y hacer que el código sea más difícil de mantener. Además, el parámetro String permite valores no previstos.'
       },
       {
-        'titulo': 'Captura de excepciones con logging',
+        'titulo': 'Aplicación de OCP con polimorfismo',
         'codigo':
-        'try {\n  process();\n} catch (e) {\n  print("Error en process(): $e");\n}'
+            'abstract class PaymentMethod {\n  void pay();\n}\nclass PayPal implements PaymentMethod {\n  @override\n  void pay() {}\n}\nclass Card implements PaymentMethod {\n  @override\n  void pay() {}\n}',
+        'explicacion':
+            'Aplica el OCP porque define una abstracción común, PaymentMethod, que permite incorporar nuevas formas de pago creando clases que implementen pay(), sin tener que modificar el código que utiliza esa abstracción. Esto facilita la extensión del sistema. Los métodos están vacíos porque el ejemplo solo demuestra la estructura.'
       },
       {
-        'titulo': 'Error sin contexto',
+        'titulo': 'Violación de LSP',
         'codigo':
-        'throw Exception("Falló"); // No aporta información'
+            'class Bird { void fly(){} }\nclass Penguin extends Bird { @override void fly(){} } // No debería',
+        'explicacion':
+            'Puede violar el Principio de Sustitución de Liskov (LSP) porque Bird promete que todas sus subclases pueden volar, pero un pingüino no puede hacerlo. Si el método fly() no tiene un comportamiento válido para Penguin, sustituir una instancia de Bird por un Penguin podría causar resultados incorrectos o excepciones. El problema es que la clase base impone una capacidad que no todas las aves tienen.'
       },
       {
-        'titulo': 'Error contextualizado',
+        'titulo': 'Cumpliendo LSP',
         'codigo':
-        'throw Exception("Error al cargar usuario: ID inválido");'
+            'abstract class Bird {}\nclass FlyingBird extends Bird {\n  void fly() {}\n}\nclass Penguin extends Bird {}',
+        'explicacion':
+            'Evita la violación anterior porque Bird ya no exige que todas las aves puedan volar. FlyingBird representa las aves que sí tienen esa capacidad, mientras que Penguin no necesita implementar un método que no puede cumplir. Así, las subclases no prometen comportamientos incompatibles con su naturaleza.'
       },
     ],
-
     'DRY y Reutilización': [
       {
         'titulo': 'Código duplicado (rompe DRY)',
-        'codigo': 'print("Hola Juan");\nprint("Hola Pedro");'
+        'codigo': 'print("Hola Juan");\nprint("Hola Pedro");',
+        'explicacion':
+            'Es un ejemplo de lógica repetida porque se escribe una instrucción de saludo por separado para cada persona. Si se quisiera cambiar el formato del saludo, habría que modificar cada línea. En este caso es una duplicación sencilla, pero cuando una misma lógica aparece muchas veces, mantenerla se vuelve más difícil.'
       },
       {
         'titulo': 'Aplicando DRY con función reutilizable',
         'codigo':
-        'void saludar(String nombre){\n  print("Hola ?nombre");\n}\n\nsaludar("Juan");\nsaludar("Pedro");'
+            'void saludar(String nombre) {\n  print("Hola #nombre");\n}\n\nsaludar("Juan");\nsaludar("Pedro");',
+        'explicacion':
+            'Aplica el principio DRY (Don’t Repeat Yourself) porque concentra la lógica del saludo en una sola función. El parámetro nombre permite reutilizarla con diferentes personas. Si cambia el formato del saludo, solo es necesario modificar la función. En Dart, la interpolación correcta de una variable dentro de un String se escribe como #nombre.'
       },
       {
         'titulo': 'Lógica repetida',
         'codigo':
-        'double total1 = price + (price * 0.18);\ndouble total2 = cost + (cost * 0.18);'
+            'double total1 = price + (price * 0.18);\ndouble total2 = cost + (cost * 0.18);',
+        'explicacion':
+            'La misma fórmula para calcular un valor con un impuesto del 18 % aparece dos veces. Si la tasa cambia, habría que actualizar ambas expresiones, lo que aumenta el riesgo de inconsistencias. Además, price y cost deben estar declaradas previamente como valores numéricos compatibles con double.'
       },
       {
         'titulo': 'Uso de función reutilizable',
         'codigo':
-        'double aplicarImpuesto(double valor){\n  return valor * 1.18;\n}\n\nfinal total1 = aplicarImpuesto(price);\nfinal total2 = aplicarImpuesto(cost);'
+            'double aplicarImpuesto(double valor) {\n  return valor * 1.18;\n}\n\nfinal total1 = aplicarImpuesto(price);\nfinal total2 = aplicarImpuesto(cost);',
+        'explicacion':
+            'Aplica DRY porque centraliza el cálculo del impuesto en aplicarImpuesto y reutiliza la función para distintos valores. Si cambia la tasa, se modifica en un solo lugar. El uso de final permite que total1 y total2 reciban un valor que no se reasignará. Para mejorar el mantenimiento, la tasa del 18 % podría definirse como una constante con un nombre descriptivo.'
       },
       {
         'titulo': 'Condiciones repetidas',
-        'codigo':
-        'if(user == null) return;\n...\nif(user == null) return;'
+        'codigo': 'if (user == null) return;\n...\nif (user == null) return;',
+        'explicacion':
+            'La misma condición para comprobar si user es null aparece en dos lugares. Si ambas comprobaciones realizan exactamente la misma tarea y pueden centralizarse, la repetición podría reducirse. Sin embargo, repetir una condición sencilla no siempre es malo: depende del contexto y de si extraerla realmente mejora la claridad.'
       },
       {
         'titulo': 'Extracción en función reusable',
         'codigo':
-        'bool isNull(o) => o == null;\n\nif(isNull(user)) return;'
+            'bool isNull(Object? value) => value == null;\n\nif (isNull(user)) return;',
+        'explicacion':
+            'Extrae la comprobación de null en una función que puede reutilizarse. El tipo Object? permite recibir distintos tipos de valores, incluido null. Sin embargo, para una condición tan sencilla, llamar directamente a if (user == null) return suele ser más claro. La función reutilizable tiene más sentido si la comprobación representa una regla de negocio o se utiliza en muchos lugares.'
       },
     ],
-
     'Asincronía': [
       {
         'titulo': 'Mal código asincrónico',
         'codigo':
-        'Future cargar(){sleep(5); return Future.value(1);} // Bloquea el hilo'
+            'Future<int> cargar() {\n  sleep(Duration(seconds: 5));\n  return Future.value(1);\n} // Bloquea el hilo',
+        'explicacion':
+            'Es una mala práctica porque sleep detiene la ejecución del hilo durante cinco segundos. En una aplicación Flutter, esto puede congelar la interfaz y evitar que responda a las interacciones del usuario. Para esperar sin bloquear el hilo, conviene utilizar Future.delayed junto con async y await.'
       },
       {
         'titulo': 'Buen uso async/await',
         'codigo':
-        'Future cargar() async {\n  await Future.delayed(Duration(seconds: 5));\n  return 1;\n}'
+            'Future<int> cargar() async {\n  await Future.delayed(Duration(seconds: 5));\n  return 1;\n}',
+        'explicacion':
+            'Es una buena práctica porque Future.delayed permite esperar cinco segundos sin bloquear el hilo de la interfaz. La palabra async permite que la función devuelva un Future y await espera a que termine la operación antes de continuar. Esto ayuda a mantener la aplicación receptiva mientras se completa la espera.'
       },
       {
         'titulo': 'Uso incorrecto de Future',
-        'codigo':
-        'Future<int> load(){ return 5; } // No retorna Future válido'
+        'codigo': 'Future<int> load() {\n  return 5; // Error de tipo\n}',
+        'explicacion':
+            'Es incorrecto porque la función declara que devuelve Future<int>, pero retorna directamente un int. Dart detecta la incompatibilidad de tipos. Para corregirlo, se puede devolver Future.value(5) o declarar la función con async y devolver 5.'
       },
       {
         'titulo': 'Retorno correcto de Future',
-        'codigo':
-        'Future<int> load() async {\n  return 5;\n}'
+        'codigo': 'Future<int> load() async {\n  return 5;\n}',
+        'explicacion':
+            'Es correcto porque async permite que la función devuelva un Future<int>, aunque dentro se retorne directamente un entero. Dart envuelve ese valor en un Future que se completa con el resultado 5. Esto es útil cuando una función forma parte de un proceso asíncrono.'
       },
       {
         'titulo': 'Callback hell (mala práctica)',
         'codigo':
-        'loadA().then((a){\n  loadB(a).then((b){\n    loadC(b).then((c){\n      print(c);\n    });\n  });\n});'
+            'loadA().then((a) {\n  loadB(a).then((b) {\n    loadC(b).then((c) {\n      print(c);\n    });\n  });\n});',
+        'explicacion':
+            'Este ejemplo anida varias operaciones con then, lo que dificulta seguir el flujo de ejecución y manejar errores de forma centralizada. A medida que se agregan más operaciones, el código puede volverse difícil de leer y mantener. Aunque then no es incorrecto por sí mismo, anidar demasiados callbacks suele complicar la comprensión.'
       },
       {
         'titulo': 'Uso correcto de async/await',
         'codigo':
-        'final a = await loadA();\nfinal b = await loadB(a);\nfinal c = await loadC(b);\nprint(c);'
+            'Future<void> procesar() async {\n  final a = await loadA();\n  final b = await loadB(a);\n  final c = await loadC(b);\n  print(c);\n}',
+        'explicacion':
+            'Es más legible porque await permite escribir las operaciones asíncronas en el orden en que deben ejecutarse. Cada operación espera el resultado de la anterior, sin bloquear el hilo mientras el Future está pendiente. Además, se puede utilizar try-catch para gestionar errores de manera clara. Las funciones loadA, loadB y loadC deben devolver los Future correspondientes.'
       },
     ],
-
     'Testing': [
       {
         'titulo': 'Mal test (sin objetivo)',
-        'codigo': 'test("algo", (){}); // No valida nada'
+        'codigo': 'test("algo", () {}); // No valida nada',
+        'explicacion':
+            'Es una mala práctica porque la prueba no realiza ninguna operación ni verifica un resultado. Aunque el test puede finalizar correctamente, no demuestra que el código funcione como se espera. Una buena prueba debe comprobar un comportamiento específico mediante una expectativa, por ejemplo, utilizando expect.'
       },
       {
         'titulo': 'Buen test unitario',
-        'codigo': 'test("Suma correcta",(){\n  expect(suma(2,3),5);\n});'
+        'codigo': 'test("Suma correcta", () {\n  expect(suma(2, 3), 5);\n});',
+        'explicacion':
+            'Es una buena práctica porque comprueba un resultado concreto: que sumar 2 y 3 produzca 5. La función expect compara el resultado obtenido con el esperado y hace que la prueba falle si no coinciden. Esto permite detectar errores en la función suma.'
       },
       {
         'titulo': 'Test dependiente del orden (mala práctica)',
         'codigo':
-        'test("A", (){ counter++; });\ntest("B", (){ expect(counter, 1); });'
+            'test("A", () { counter++; });\ntest("B", () { expect(counter, 1); });',
+        'explicacion':
+            'Es una mala práctica porque el segundo test depende del valor que deja el primero. Si las pruebas se ejecutan en otro orden, se ejecutan de forma aislada o el contador conserva un valor diferente, el resultado puede cambiar. Cada test debería preparar sus propios datos y verificar su comportamiento sin depender de otras pruebas.'
       },
       {
         'titulo': 'Test aislado e independiente',
         'codigo':
-        'setUp(() => counter = 0);\n\ntest("Incrementa correctamente", (){\n  counter++;\n  expect(counter, 1);\n});'
+            'setUp(() => counter = 0);\n\ntest("Incrementa correctamente", () {\n  counter++;\n  expect(counter, 1);\n});',
+        'explicacion':
+            'Es una buena práctica porque setUp reinicia el contador antes de cada prueba del grupo correspondiente. Así, el test comienza con un estado conocido y verifica que incrementar el contador produzca 1. Esto mejora la reproducibilidad y evita dependencias accidentales entre pruebas.'
       },
       {
         'titulo': 'Test lento (mala práctica)',
         'codigo':
-        'test("prueba lenta", () async {\n  await Future.delayed(Duration(seconds: 5));\n});'
+            'test("prueba lenta", () async {\n  await Future.delayed(Duration(seconds: 5));\n});',
+        'explicacion':
+            'Es una mala práctica como prueba unitaria porque espera cinco segundos sin comprobar ningún resultado. Esto alarga la ejecución de la suite de pruebas sin aportar una validación útil. Las esperas reales pueden ser necesarias al probar comportamientos asíncronos, pero deben comprobar un resultado y evitar retrasos arbitrarios cuando sea posible.'
       },
       {
         'titulo': 'Test rápido y aislado',
         'codigo':
-        'test("procesa valores", (){\n  final r = procesar(2);\n  expect(r, 4);\n});'
+            'test("procesa valores", () {\n  final r = procesar(2);\n  expect(r, 4);\n});',
+        'explicacion':
+            'Es una buena práctica porque ejecuta una operación concreta y compara el resultado con el valor esperado. No introduce esperas innecesarias ni depende de otros tests, suponiendo que procesar sea una función determinista y que no dependa de estado externo. Esto facilita ejecutar la prueba repetidamente y detectar errores.'
       },
     ],
-
     'Arquitectura limpia': [
       {
         'titulo': 'Arquitectura acoplada (mala práctica)',
         'codigo':
-        'class UI {\n  void saveUser(){\n    Database().insertUser();\n  }\n}\n\nclass Database {\n  void insertUser(){}\n}'
+            'class UI {\n  void saveUser(){\n    Database().insertUser();\n  }\n}\n\nclass Database {\n  void insertUser(){}\n}',
+        'explicacion':
+            'Es una mala práctica porque la interfaz UI crea directamente una instancia de Database y depende de su implementación concreta. Esto mezcla la presentación con el acceso a datos y dificulta realizar pruebas o cambiar la base de datos. Si se modifica Database, la interfaz podría necesitar cambios. Una arquitectura más flexible separa las responsabilidades y utiliza abstracciones para reducir el acoplamiento.'
       },
       {
         'titulo': 'Arquitectura limpia (buena práctica)',
         'codigo':
-        'class UserRepository {\n  void save(User user){}\n}\n\nclass SaveUserUseCase {\n  final UserRepository repo;\n  SaveUserUseCase(this.repo);\n  void call(User user){ repo.save(user); }\n}'
+            'abstract class UserRepository {\n  void save(User user);\n}\n\nclass SaveUserUseCase {\n  final UserRepository repo;\n  SaveUserUseCase(this.repo);\n\n  void call(User user) {\n    repo.save(user);\n  }\n}',
+        'explicacion':
+            'Es una mejor práctica porque separa la operación de guardar un usuario en un caso de uso y define UserRepository como una abstracción. SaveUserUseCase no necesita conocer los detalles de la base de datos, solo la operación que ofrece el repositorio. Esto facilita las pruebas con implementaciones simuladas y permite cambiar el mecanismo de almacenamiento sin modificar el caso de uso. La clase User y una implementación concreta del repositorio deben definirse por separado.'
       },
       {
         'titulo': 'Vista accediendo a la base de datos',
         'codigo':
-        'class ProfilePage{\n  void load(){ Database().getUser(); }\n}'
+            'class ProfilePage {\n  void load() {\n    Database().getUser();\n  }\n}',
+        'explicacion':
+            'Es una mala práctica arquitectónica porque ProfilePage accede directamente a la base de datos. La vista queda encargada tanto de presentar información como de iniciar el acceso a datos. Esto dificulta probar la interfaz de manera aislada y cambiar la fuente de información. Es preferible delegar la obtención del usuario a una capa de dominio o a un servicio de aplicación.'
       },
       {
         'titulo': 'Capa de dominio separada',
         'codigo':
-        'class GetUserUseCase{\n  final UserRepository repo;\n  GetUserUseCase(this.repo);\n  User call(){ return repo.getUser(); }\n}'
+            'abstract class UserRepository {\n  User getUser();\n}\n\nclass GetUserUseCase {\n  final UserRepository repo;\n  GetUserUseCase(this.repo);\n\n  User call() {\n    return repo.getUser();\n  }\n}',
+        'explicacion':
+            'Es una buena práctica porque la obtención del usuario se representa mediante un caso de uso que depende de una abstracción, UserRepository, en lugar de una base de datos concreta. Así, la lógica de aplicación queda separada de los detalles de almacenamiento. Se puede utilizar una implementación real o simulada del repositorio según se necesite. Para que compile, User debe estar definido y el repositorio debe tener una implementación concreta.'
       },
       {
         'titulo': 'Dependencia directa desde UI',
-        'codigo':
-        'button.onPressed = () => Api().fetch();'
+        'codigo': 'button.onPressed = () => Api().fetch();',
+        'explicacion':
+            'Es un ejemplo de acoplamiento porque la acción de la interfaz crea directamente un objeto Api y llama a su método fetch. La interfaz conoce el servicio concreto y queda ligada a su implementación. Además, si fetch es asíncrono, normalmente se debe gestionar su Future y los posibles errores. En una arquitectura más organizada, la interfaz delega la operación en un controlador o caso de uso.'
       },
       {
         'titulo': 'Intermediación mediante capa de casos de uso',
-        'codigo':
-        'button.onPressed = () => FetchDataUseCase(repo).call();'
+        'codigo': 'button.onPressed = () => FetchDataUseCase(repo).call();',
+        'explicacion':
+            'Mejora la separación de responsabilidades porque la interfaz solicita una acción a un caso de uso en vez de llamar directamente a una API. Sin embargo, crear FetchDataUseCase en cada pulsación no es ideal: conviene construirlo una vez e inyectarlo en el componente que lo utiliza. Si la operación es asíncrona, el caso de uso y el callback también deben gestionar Future y los errores correspondientes.'
       },
     ],
-
     'CI/CD': [
       {
         'titulo': 'Pipeline incompleto',
-        'codigo': '# build.yml\nsteps:\n  - run: echo "Solo compila"'
+        'codigo': '# build.yml\nsteps:\n  - run: echo "Solo compila"',
+        'explicacion':
+            'Es un pipeline incompleto porque únicamente muestra un mensaje en la consola y no compila realmente la aplicación. Tampoco ejecuta análisis estático ni pruebas automatizadas. Un pipeline útil debe comprobar que el código sea válido y que las funciones principales sigan funcionando antes de generar una versión de la aplicación.'
       },
       {
         'titulo': 'Pipeline CI/CD con pruebas',
         'codigo':
-        '# build.yml\nsteps:\n  - run: flutter test\n  - run: flutter build apk\n  - run: echo "Deploy automático si pasa todo"'
+            '# build.yml\nsteps:\n  - run: flutter pub get\n  - run: flutter analyze\n  - run: flutter test\n  - run: flutter build apk\n  # Publicar el APK si todas las etapas pasan',
+        'explicacion':
+            'Es una mejor práctica porque instala las dependencias, analiza el código, ejecuta las pruebas y compila la aplicación. Si una etapa falla, el pipeline puede detenerse para evitar que un error llegue a la siguiente fase. Sin embargo, compilar no equivale a desplegar: para completar el CD hace falta configurar una etapa de publicación o distribución del APK. La sintaxis exacta depende de la plataforma de CI utilizada.'
       },
       {
         'titulo': 'Pipeline sin validaciones',
-        'codigo': '# pipeline.yml\n- run: dart run'
+        'codigo': '# pipeline.yml\n- run: dart run',
+        'explicacion':
+            'Es insuficiente porque dart run ejecuta el programa Dart indicado o busca el punto de entrada correspondiente, pero no sustituye al análisis estático ni a las pruebas. Sin validaciones explícitas, los errores pueden pasar inadvertidos hasta que se ejecuta la aplicación. En un proyecto Flutter, conviene utilizar flutter analyze y flutter test.'
       },
       {
         'titulo': 'Pipeline con análisis y pruebas',
         'codigo':
-        '# pipeline.yml\n- run: dart analyze\n- run: dart test\n- run: dart run build_runner build'
+            '# pipeline.yml\n- run: flutter pub get\n- run: flutter analyze\n- run: flutter test',
+        'explicacion':
+            'Es una buena práctica porque flutter analyze detecta problemas de código y flutter test ejecuta las pruebas automatizadas. flutter pub get prepara las dependencias del proyecto. Estas verificaciones ayudan a detectar errores antes de integrar cambios. Si el proyecto utiliza generación de código, también puede añadirse build_runner cuando sea necesario.'
       },
       {
         'titulo': 'Sin control de versiones del build',
-        'codigo':
-        '# deploy.yml\nsteps:\n  - run: flutter build apk'
+        'codigo': '# deploy.yml\nsteps:\n  - run: flutter build apk',
+        'explicacion':
+            'Este pipeline genera un APK, pero no muestra cómo se identifica la versión, dónde se almacena el artefacto ni cómo se distribuye. Sin un proceso de versionado y conservación de los APK generados, puede ser difícil identificar qué versión se entregó o reproducir una publicación. Es recomendable administrar la versión del proyecto y conservar los artefactos de cada compilación.'
       },
       {
         'titulo': 'Versión automática en CI',
         'codigo':
-        '# deploy.yml\nsteps:\n  - run: dart pub global activate cider\n  - run: cider bump patch\n  - run: flutter build apk'
+            '# deploy.yml\nsteps:\n  - run: dart pub global activate cider\n  - run: cider bump patch\n  - run: flutter pub get\n  - run: flutter analyze\n  - run: flutter test\n  - run: flutter build apk',
+        'explicacion':
+            'Este ejemplo incorpora la actualización automática de la versión patch antes de validar y compilar. Esto puede ser útil para publicar correcciones pequeñas, pero requiere configurar correctamente la herramienta cider y controlar cómo se guardan los cambios de versión. En CI también debe evitarse que cada reintento incremente la versión accidentalmente. Para completar la publicación, se necesita una etapa que almacene o distribuya el APK generado.'
       },
     ],
-
     'Seguridad': [
       {
         'titulo': 'Mala práctica: contraseña en texto plano',
-        'codigo': 'const apiKey = "12345"; // ❌ Nunca hagas esto'
+        'codigo': 'const apiKey = "12345"; // Nunca hagas esto',
+        'explicacion':
+            'Es una mala práctica porque la clave está escrita directamente en el código fuente. Cualquier persona que tenga acceso al repositorio o al código compilado podría llegar a encontrarla. En una aplicación Flutter, las claves incluidas en el cliente no pueden considerarse secretas. Las credenciales sensibles deben mantenerse en un servidor seguro y no publicarse en el código.'
       },
       {
         'titulo': 'Buena práctica: variable de entorno',
-        'codigo':
-        'final apiKey = Platform.environment["API_KEY"]; // ✅ Segura'
+        'codigo': 'final apiKey = Platform.environment["API_KEY"];',
+        'explicacion':
+            'Es una alternativa útil en aplicaciones que se ejecutan en un servidor o entorno controlado, porque permite configurar la clave fuera del código fuente. Sin embargo, Platform.environment no es una solución universal para Flutter móvil y no protege secretos que se incorporen durante la compilación de la aplicación. Para una API que requiere una clave privada, lo más seguro es realizar las llamadas desde un backend que gestione esa credencial.'
       },
       {
         'titulo': 'Tokens hardcodeados (mala práctica)',
-        'codigo': 'final token = "eyJhbGciOi...";'
+        'codigo': 'final token = "eyJhbGciOi...";',
+        'explicacion':
+            'Es una mala práctica porque el token queda expuesto en el código y puede reutilizarse si sigue siendo válido. Los tokens pueden conceder acceso a información o funciones protegidas. Deben obtenerse mediante un proceso de autenticación, evitarse en el código fuente y almacenarse de acuerdo con su nivel de sensibilidad. Si un token real se expone, debe revocarse o renovarse.'
       },
       {
         'titulo': 'Uso de Secure Storage',
         'codigo':
-        'final storage = FlutterSecureStorage();\nfinal token = await storage.read(key: "token");'
+            'final storage = FlutterSecureStorage();\nfinal token = await storage.read(key: "token");',
+        'explicacion':
+            'Es una buena práctica para guardar y recuperar tokens en un dispositivo móvil, porque FlutterSecureStorage utiliza mecanismos de almacenamiento seguro de la plataforma, como Keychain en iOS y mecanismos respaldados por el sistema en Android. Reduce el riesgo frente a guardarlos en texto plano en preferencias comunes, aunque no elimina todos los riesgos. Se debe configurar correctamente el paquete, controlar los errores y evitar imprimir el token en registros.'
       },
       {
         'titulo': 'Uso de HTTP sin cifrado',
-        'codigo': 'final url = "http://api.miapp.com";'
+        'codigo': 'final url = "http://api.miapp.com";',
+        'explicacion':
+            'Es una mala práctica para transmitir datos sensibles porque HTTP no cifra la comunicación. Un atacante que pueda interceptar el tráfico podría leer o modificar los datos, incluidos tokens y otra información privada. Para comunicarse con un servicio remoto, debe utilizarse HTTPS y validarse correctamente el certificado del servidor.'
       },
       {
         'titulo': 'Forzar HTTPS',
-        'codigo': 'final url = "https://api.miapp.com";'
+        'codigo': 'final url = "https://api.miapp.com";',
+        'explicacion':
+            'Es una buena práctica porque HTTPS cifra la comunicación y ayuda a verificar la identidad del servidor mediante certificados TLS. Esto reduce el riesgo de interceptación y modificación del tráfico. No obstante, escribir una URL con https no protege por sí solo toda la aplicación: también deben validarse los certificados, proteger las credenciales y aplicar controles de acceso en el servidor.'
       },
     ],
-
     'Patrones de diseño': [
       {
         'titulo': 'Uso incorrecto sin patrón',
         'codigo':
-        'var db = Database();\nvar db2 = Database(); // Múltiples instancias innecesarias'
+            'var db = Database();\nvar db2 = Database(); // Múltiples instancias innecesarias',
+        'explicacion':
+            'Puede ser una mala práctica si ambas instancias representan la misma conexión o recurso compartido y no es necesario duplicarlo. Crear varios objetos puede aumentar el consumo de recursos y complicar la coordinación del acceso a los datos. Sin embargo, tener varias instancias no es incorrecto por sí mismo: depende de cómo esté diseñada la clase Database y de si realmente se necesita compartir una única instancia.'
       },
       {
         'titulo': 'Aplicando patrón Singleton',
         'codigo':
-        'class Database {\n  static final Database _instance = Database._();\n  Database._();\n  factory Database() => _instance;\n}'
+            'class Database {\n  static final Database _instance = Database._();\n  Database._();\n  factory Database() => _instance;\n}',
+        'explicacion':
+            'Aplica el patrón Singleton porque el constructor privado impide crear instancias directamente desde fuera de la clase y el constructor factory devuelve siempre la misma instancia. Esto puede ser útil para administrar un recurso compartido. No obstante, un Singleton no siempre es la mejor opción: puede dificultar las pruebas y el manejo de estados. Además, compartir el objeto no garantiza por sí solo que las conexiones o consultas a la base de datos estén bien gestionadas.'
       },
       {
         'titulo': 'Acoplamiento sin patrón Factory',
-        'codigo':
-        'var service = EmailService(); // Difícil de cambiar'
+        'codigo': 'var service = EmailService(); // Difícil de cambiar',
+        'explicacion':
+            'Puede generar acoplamiento porque el código crea directamente una implementación concreta de EmailService. Si posteriormente se necesita cambiar el servicio o utilizar una implementación simulada durante las pruebas, habrá que modificar el lugar donde se construye el objeto. En aplicaciones pequeñas esto puede ser perfectamente válido, pero una fábrica o la inyección de dependencias pueden aportar flexibilidad cuando existen varias implementaciones.'
       },
       {
         'titulo': 'Aplicación del patrón Factory',
         'codigo':
-        'class ServiceFactory{\n  static EmailService createEmailService(){\n    return EmailService();\n  }\n}'
+            'class ServiceFactory {\n  static EmailService createEmailService() {\n    return EmailService();\n  }\n}',
+        'explicacion':
+            'Aplica una forma sencilla del patrón Factory porque centraliza la creación de EmailService en un método específico. Si las reglas de creación cambian, pueden modificarse en un solo lugar. Sin embargo, esta fábrica todavía devuelve una clase concreta, por lo que no elimina todo el acoplamiento. Para permitir distintas implementaciones, podría devolver una abstracción, como EmailServiceInterface.'
       },
       {
         'titulo': 'Dependencia directa (sin Strategy)',
         'codigo':
-        'class Auth{\n  void login(){ print("Google login"); }\n}'
+            'class Auth {\n  void login() {\n    print("Google login");\n  }\n}',
+        'explicacion':
+            'La clase Auth tiene el comportamiento de inicio de sesión definido directamente en su método. Si se quieren agregar otros métodos, como correo y contraseña o Apple, la clase podría acumular condicionales y responsabilidades. Para un ejemplo sencillo esto puede ser suficiente, pero cuando existen distintas estrategias de autenticación, conviene separarlas.'
       },
       {
         'titulo': 'Aplicando Strategy',
         'codigo':
-        'abstract class LoginStrategy{ void login(); }\nclass GoogleLogin implements LoginStrategy{ void login(){} }\nclass Auth{\n  final LoginStrategy strategy;\n  Auth(this.strategy);\n  void login(){ strategy.login(); }\n}'
+            'abstract class LoginStrategy {\n  void login();\n}\n\nclass GoogleLogin implements LoginStrategy {\n  @override\n  void login() {}\n}\n\nclass Auth {\n  final LoginStrategy strategy;\n  Auth(this.strategy);\n\n  void login() {\n    strategy.login();\n  }\n}',
+        'explicacion':
+            'Aplica el patrón Strategy porque define una interfaz común, LoginStrategy, y permite que Auth utilice distintas implementaciones de inicio de sesión sin conocer sus detalles internos. La estrategia se proporciona mediante el constructor, lo que facilita cambiar el comportamiento y realizar pruebas con implementaciones alternativas. El método de GoogleLogin está vacío porque el ejemplo se centra en la estructura del patrón, no en implementar una autenticación real.'
       },
     ],
-
     'Refactorización': [
       {
         'titulo': 'Código sin refactorizar',
-        'codigo':
-        'double calcularPrecio(double p){\n  return p - (p * 0.21);\n}'
+        'codigo': 'double calcularPrecio(double p){\n'
+            '  return p - (p * 0.21);\n'
+            '}',
+        'explicacion':
+            'El código funciona, pero utiliza el nombre p, que no explica qué representa el valor. Además, el 0.21 es un número mágico, ya que su significado no queda claro a simple vista. Esto dificulta la lectura y hace que los cambios futuros sean más propensos a errores.'
       },
       {
         'titulo': 'Código refactorizado con constante y claridad',
-        'codigo':
-        'const double IVA = 0.21;\n\ndouble calcularPrecio(double precioBase){\n  return precioBase - (precioBase * IVA);\n}'
+        'codigo': 'const double tasaDescuento = 0.21;\n\n'
+            'double calcularPrecio(double precioBase) {\n'
+            '  return precioBase - (precioBase * tasaDescuento);\n'
+            '}',
+        'explicacion':
+            'Mejora la legibilidad al usar nombres descriptivos y una constante para representar la tasa aplicada. Si el valor cambia, solo es necesario modificar la constante. En este ejemplo se interpreta el 21 % como un descuento; si representa el IVA, el cálculo dependerá de si se desea añadirlo al precio o extraerlo de un precio que ya lo incluye.'
       },
       {
         'titulo': 'Función larga y difícil de leer',
-        'codigo':
-        'void calcular(){\n  // 40 líneas de lógica mezclada\n}'
+        'codigo': 'void calcular() {\n'
+            '  // 40 líneas de lógica mezclada\n'
+            '}',
+        'explicacion':
+            'Una función demasiado larga que mezcla varias tareas puede ser difícil de entender, probar y mantener. Cuando la carga de datos, las validaciones y el procesamiento están unidos, un cambio en una parte puede afectar a las demás. El problema no es la cantidad exacta de líneas, sino la mezcla de responsabilidades.'
       },
       {
         'titulo': 'Refactor en funciones pequeñas',
-        'codigo':
-        'void calcular(){\n  final datos = cargarDatos();\n  final validados = validar(datos);\n  procesar(validados);\n}'
+        'codigo': 'void calcular() {\n'
+            '  final datos = cargarDatos();\n'
+            '  final validados = validar(datos);\n'
+            '  procesar(validados);\n'
+            '}',
+        'explicacion':
+            'Divide el proceso en pasos con responsabilidades más claras: cargar, validar y procesar. Esto facilita comprender el flujo principal y probar cada operación por separado. Para que el ejemplo compile, las funciones auxiliares deben estar definidas y sus tipos de retorno deben ser compatibles entre sí.'
       },
       {
         'titulo': 'Condicional compleja',
-        'codigo':
-        'if(a > 10 && b < 5 && c == true && nombre != ""){}'
+        'codigo': 'if (a > 10 && b < 5 && c == true && nombre != "") {\n'
+            '  // Ejecutar acción\n'
+            '}',
+        'explicacion':
+            'La condición reúne varias reglas en una sola expresión y utiliza comparaciones redundantes, como c == true. Esto puede dificultar la lectura, especialmente cuando la condición crece o se repite en distintos lugares. Conviene expresar la intención de la condición con nombres claros.'
       },
       {
         'titulo': 'Extracción a función con intención',
-        'codigo':
-        'bool esValido() => a > 10 && b < 5 && c && nombre.isNotEmpty;\n\nif(esValido()){}'
+        'codigo': 'bool esValido() =>\n'
+            '    a > 10 && b < 5 && c && nombre.isNotEmpty;\n\n'
+            'if (esValido()) {\n'
+            '  // Ejecutar acción\n'
+            '}',
+        'explicacion':
+            'Extrae las reglas a una función con un nombre que comunica su propósito. Así, el código que la utiliza resulta más fácil de entender y la validación puede reutilizarse. Las variables a, b, c y nombre deben estar declaradas y disponibles en el ámbito de la función; en código real, es preferible pasarlas como parámetros cuando corresponda.'
       },
     ],
-
     'Rendimiento': [
       {
         'titulo': 'Ineficiencia en loop',
-        'codigo':
-        'for (int i=0; i<items.length; i++){\n  print(items.length);\n}'
+        'codigo': 'for (int i = 0; i < items.length; i++) {\n'
+            '  print(items.length);\n'
+            '}',
+        'explicacion':
+            'Consulta items.length en cada iteración. Si la colección calcula su longitud de forma costosa, esto podría añadir trabajo innecesario. Sin embargo, en las listas normales de Dart, length es una operación de tiempo constante, por lo que guardar la longitud antes del bucle no siempre produce una mejora significativa. El problema más evidente aquí es que se imprime la misma longitud en cada vuelta.'
       },
       {
         'titulo': 'Optimización en loop',
-        'codigo':
-        'final total = items.length;\nfor (int i=0; i<total; i++){\n  print(total);\n}'
+        'codigo': 'final total = items.length;\n'
+            'for (int i = 0; i < total; i++) {\n'
+            '  print(total);\n'
+            '}',
+        'explicacion':
+            'Guarda la longitud en una variable final y reutiliza ese valor durante el bucle. Esto evita repetir la consulta y deja claro que el límite no debe cambiar durante la iteración. En una List de Dart, la mejora de rendimiento normalmente será insignificante; la ventaja principal es reutilizar un valor estable. Si la colección cambia durante el bucle, guardar la longitud también puede alterar el comportamiento esperado.'
       },
       {
         'titulo': 'Uso innecesario de listas temporales',
-        'codigo':
-        'var temp = items.map((e) => e.toString()).toList();'
+        'codigo': 'var temp = items.map((e) => e.toString()).toList();',
+        'explicacion':
+            'El método toList() crea una nueva lista y almacena en ella los resultados de la transformación. Si solo se necesita recorrer los elementos una vez, esta lista temporal puede consumir memoria y trabajo innecesarios. No obstante, sí es útil cuando se necesita una lista concreta, acceder a sus elementos por índice o recorrer los resultados varias veces.'
       },
       {
         'titulo': 'Uso eficiente con lazy evaluation',
-        'codigo':
-        'var iterator = items.map((e) => e.toString()); // No crea lista'
+        'codigo': 'final iterable = items.map((e) => e.toString());\n'
+            '// La transformación se ejecuta al recorrer iterable',
+        'explicacion':
+            'En Dart, map() devuelve un Iterable perezoso: la transformación se aplica cuando se recorren sus elementos, en lugar de crear inmediatamente una lista nueva. Esto puede ahorrar memoria si solo se necesitan algunos elementos o se recorre el resultado una vez. Sin embargo, si se recorre iterable varias veces, la transformación puede ejecutarse de nuevo en cada recorrido. Si se necesita materializar y reutilizar el resultado, toList() puede ser más conveniente.'
       },
       {
         'titulo': 'Creación de objetos en loop',
-        'codigo':
-        'for(int i=0;i<1000;i++){\n  final date = DateTime.now();\n}'
+        'codigo': 'for (int i = 0; i < 1000; i++) {\n'
+            '  final date = DateTime.now();\n'
+            '}',
+        'explicacion':
+            'Crea un objeto DateTime en cada iteración, aunque el valor no se utiliza en el ejemplo. Si solo se necesita conocer la hora actual una vez, las llamadas repetidas son trabajo innecesario. En cambio, si cada iteración necesita la hora actual, crear el valor dentro del bucle puede ser correcto.'
       },
       {
         'titulo': 'Reuse fuera del loop',
-        'codigo':
-        'final date = DateTime.now();\nfor(int i=0;i<1000;i++){\n  use(date);\n}'
+        'codigo': 'final date = DateTime.now();\n'
+            'for (int i = 0; i < 1000; i++) {\n'
+            '  use(date);\n'
+            '}',
+        'explicacion':
+            'Obtiene la fecha y hora una sola vez y reutiliza ese mismo valor durante todas las iteraciones, evitando llamadas repetidas a DateTime.now(). Esto es adecuado cuando todas las operaciones deben usar la misma referencia temporal. Si cada iteración necesita la hora actualizada, la llamada debe permanecer dentro del bucle.'
       },
     ],
-
     'Documentación': [
       {
         'titulo': 'Sin documentación',
-        'codigo': 'void procesar(){}'
+        'codigo': 'void procesar() {}',
+        'explicacion':
+            'La función no tiene documentación que explique su propósito. Aunque el nombre procesar() indica una acción general, no permite saber qué datos procesa ni qué resultado se espera. Esto puede dificultar el mantenimiento y la comprensión del código por parte de otros desarrolladores.'
       },
       {
         'titulo': 'Con documentación clara',
-        'codigo':
-        '/// Procesa los datos de entrada y los normaliza.\nvoid procesar(){}'
+        'codigo': '/// Procesa los datos de entrada y los normaliza.\n'
+            'void procesar() {}',
+        'explicacion':
+            'Utiliza un comentario DartDoc, que comienza con /// y permite documentar clases, métodos y funciones. La descripción comunica la finalidad de la función. En este ejemplo, el comentario es más útil que no tener documentación, aunque en un proyecto real debería describir con precisión qué datos recibe y cómo los normaliza.'
       },
       {
         'titulo': 'Comentario inútil',
-        'codigo': '// incrementa x\nx++;'
+        'codigo': '// incrementa x\n'
+            'x++;',
+        'explicacion':
+            'El comentario repite exactamente lo que ya expresa el código. Esto no aporta información adicional y puede quedar desactualizado si la implementación cambia. Los comentarios son más valiosos cuando explican por qué se realiza una operación o una decisión que no resulta evidente.'
       },
       {
         'titulo': 'Doc útil tipo DartDoc',
-        'codigo':
-        '/// Calcula el total aplicando impuesto.\n/// [precio] Precio base antes del impuesto.\ndouble total(double precio){ return precio * 1.21; }'
+        'codigo': '/// Calcula el total aplicando un impuesto del 21 %.\n'
+            '///\n'
+            '/// [precio] es el precio base antes del impuesto.\n'
+            'double total(double precio) {\n'
+            '  return precio * 1.21;\n'
+            '}',
+        'explicacion':
+            'Describe el propósito de la función y explica qué representa el parámetro precio. La notación [precio] permite que DartDoc identifique el parámetro como una referencia al código documentado. Además, especifica el porcentaje del impuesto para que el cálculo sea más fácil de entender. Si el porcentaje puede cambiar, sería conveniente utilizar una constante en lugar del valor literal 1.21.'
       },
       {
         'titulo': 'Documentación no útil',
-        'codigo': '/// Hace cosas\nvoid procesar(){}'
+        'codigo': '/// Hace cosas.\n'
+            'void procesar() {}',
+        'explicacion':
+            'Aunque utiliza el formato DartDoc, la descripción es demasiado genérica y no explica la responsabilidad de la función. Una buena documentación debe aportar información concreta sobre su propósito, sus parámetros, su resultado o posibles efectos secundarios cuando corresponda.'
       },
       {
         'titulo': 'Doc específica con parámetros',
-        'codigo':
-        '/// Calcula el total descontando [descuento].\n/// Retorna el precio final.\ndouble aplicarDescuento(double precio, double descuento){\n  return precio - descuento;\n}'
+        'codigo': '/// Calcula el precio final restando [descuento].\n'
+            '///\n'
+            '/// [precio] es el precio original.\n'
+            '/// [descuento] es la cantidad que se resta al precio.\n'
+            '/// Retorna el precio final después del descuento.\n'
+            'double aplicarDescuento(double precio, double descuento) {\n'
+            '  return precio - descuento;\n'
+            '}',
+        'explicacion':
+            'Documenta el propósito de la función, el significado de cada parámetro y el resultado que devuelve. Esto facilita su uso sin necesidad de revisar primero la implementación. También aclara que descuento representa una cantidad que se resta al precio, no un porcentaje. Si se utilizara un porcentaje, la fórmula tendría que ser diferente.'
       },
     ],
     'Casos de uso': [
       {
-        'titulo': 'Caso de uso sin separación de responsabilidades (mala práctica)',
-        'codigo':
-        'class UserController {\n'
+        'titulo':
+            'Caso de uso sin separación de responsabilidades (mala práctica)',
+        'codigo': 'class UserController {\n'
             '  void register(String name, String email) {\n'
             '    if (!email.contains("@")) throw Exception("Email inválido");\n'
             '    Database().saveUser(name, email);\n'
@@ -3806,12 +4185,13 @@ class _ExamplesScreenState extends State<ExamplesScreen> {
             '}\n'
             'class EmailService{\n'
             '  void sendWelcome(String email){}\n'
-            '}'
+            '}',
+        'explicacion':
+            'El controlador concentra varias tareas: valida el correo, guarda al usuario y envía el mensaje de bienvenida. Además, crea directamente las dependencias Database y EmailService, lo que aumenta el acoplamiento y dificulta sustituirlas o simularlas durante las pruebas. En una aplicación pequeña puede funcionar, pero separar la lógica de negocio de los detalles de infraestructura facilita el mantenimiento.'
       },
       {
         'titulo': 'Aplicación correcta de caso de uso (Clean Architecture)',
-        'codigo':
-        '// Capa dominio\n'
+        'codigo': '// Capa de dominio\n'
             'class RegisterUserUseCase {\n'
             '  final UserRepository repo;\n'
             '  final EmailService emailService;\n'
@@ -3829,39 +4209,45 @@ class _ExamplesScreenState extends State<ExamplesScreen> {
             '  bool _isValidEmail(String email) => email.contains("@");\n'
             '}\n'
             '\n'
-            '// Capa infraestructura\n'
+            '// Contrato del repositorio\n'
             'abstract class UserRepository {\n'
             '  void saveUser(String name, String email);\n'
             '}\n'
             '\n'
-            'class UserRepositoryImpl implements UserRepository{\n'
+            '// Infraestructura\n'
+            'class UserRepositoryImpl implements UserRepository {\n'
             '  @override\n'
-            '  void saveUser(String name, String email){}\n'
+            '  void saveUser(String name, String email) {}\n'
             '}\n'
             '\n'
-            'class EmailService{\n'
-            '  void sendWelcome(String email){}\n'
+            'class EmailService {\n'
+            '  void sendWelcome(String email) {}\n'
             '}\n'
             '\n'
-            '// Capa UI\n'
-            'final useCase = RegisterUserUseCase(UserRepositoryImpl(), EmailService());\n'
-            'useCase.execute("Juan", "juan@mail.com");'
+            '// Composición de dependencias\n'
+            'final useCase = RegisterUserUseCase(\n'
+            '  UserRepositoryImpl(),\n'
+            '  EmailService(),\n'
+            ');\n'
+            'useCase.execute("Juan", "juan@mail.com");',
+        'explicacion':
+            'El caso de uso concentra la operación de registrar un usuario y recibe sus dependencias mediante el constructor. El contrato UserRepository permite separar la lógica de negocio de la implementación concreta de almacenamiento. Esto facilita las pruebas y el reemplazo de dependencias. Como mejora adicional, EmailService también podría definirse como una abstracción. En una Clean Architecture estricta, los contratos que necesita el dominio deberían pertenecer a una capa interna, y las implementaciones concretas a infraestructura. La creación de dependencias normalmente se realiza en una capa de composición, no directamente dentro de la interfaz de usuario.'
       },
-
       {
-        'titulo': 'Caso de uso que mezcla lógica de negocio con UI (mala práctica)',
-        'codigo':
-        'void cargarProductos() async {\n'
+        'titulo':
+            'Caso de uso que mezcla lógica de negocio con UI (mala práctica)',
+        'codigo': 'void cargarProductos() async {\n'
             '  print("Mostrando loader...");\n'
             '  final data = await Api().getProducts();\n'
             '  productos = data.map((e) => Producto.fromJson(e)).toList();\n'
             '  print("Ocultando loader...");\n'
-            '}'
+            '}',
+        'explicacion':
+            'La función mezcla la gestión visual de la carga, la comunicación con la API, la conversión de datos y la modificación de un estado que parece pertenecer a la interfaz. Esto dificulta reutilizar la operación en otras pantallas y probarla de forma aislada. Además, crear Api() directamente aumenta el acoplamiento. La interfaz debería controlar el indicador de carga, mientras que un caso de uso o servicio se encarga de obtener y preparar los productos.'
       },
       {
         'titulo': 'Caso de uso reutilizable para cargar productos',
-        'codigo':
-        'class GetProductsUseCase {\n'
+        'codigo': 'class GetProductsUseCase {\n'
             '  final ProductRepository repo;\n'
             '  GetProductsUseCase(this.repo);\n'
             '\n'
@@ -3872,13 +4258,15 @@ class _ExamplesScreenState extends State<ExamplesScreen> {
             '}\n'
             '\n'
             '// UI\n'
-            'final productos = await GetProductsUseCase(ProductRepositoryImpl())();'
+            'final productos = await GetProductsUseCase(\n'
+            '  ProductRepositoryImpl(),\n'
+            ')();',
+        'explicacion':
+            'El caso de uso encapsula la operación de obtener los productos y transformarlos en objetos Producto. La interfaz puede invocarlo sin conocer los detalles de la fuente de datos y decidir por separado cómo mostrar el indicador de carga, los resultados o los errores. Al devolver un Future, permite esperar la operación asíncrona. Para mejorar el diseño, ProductRepository debería ser una abstracción y el caso de uso debería recibir una implementación mediante inyección de dependencias. El ejemplo supone que getProducts() devuelve datos compatibles con Producto.fromJson().'
       },
-
       {
         'titulo': 'Caso de uso mal diseñado (tiene más de una responsabilidad)',
-        'codigo':
-        'class PurchaseUseCase {\n'
+        'codigo': 'class PurchaseUseCase {\n'
             '  void buy(Product p) {\n'
             '    _validate(p);\n'
             '    _saveToDB(p);\n'
@@ -3889,12 +4277,13 @@ class _ExamplesScreenState extends State<ExamplesScreen> {
             '  void _saveToDB(Product p){}\n'
             '  void _sendEmail(Product p){}\n'
             '  void _log(String m){}\n'
-            '}'
+            '}',
+        'explicacion':
+            'La clase coordina la validación, el almacenamiento, el envío de correos y el registro de eventos mediante métodos internos. Esto puede hacerla demasiado dependiente de distintos mecanismos y complicar las pruebas o los cambios. Sin embargo, un caso de uso sí puede coordinar varias operaciones cuando todas forman parte de una misma acción de negocio. El problema no es realizar varios pasos, sino asumir directamente los detalles técnicos de cada uno sin abstraer las dependencias.'
       },
       {
         'titulo': 'Caso de uso bien diseñado: una sola responsabilidad',
-        'codigo':
-        'class PurchaseUseCase {\n'
+        'codigo': 'class PurchaseUseCase {\n'
             '  final PurchaseRepository repo;\n'
             '  final NotificationService notifier;\n'
             '\n'
@@ -3909,16 +4298,21 @@ class _ExamplesScreenState extends State<ExamplesScreen> {
             '  bool _valid(Product p) => p.stock > 0;\n'
             '}\n'
             '\n'
-            'abstract class PurchaseRepository { void save(Product p); }\n'
-            'abstract class NotificationService { void sendPurchaseConfirmation(Product p); }'
+            'abstract class PurchaseRepository {\n'
+            '  void save(Product p);\n'
+            '}\n'
+            '\n'
+            'abstract class NotificationService {\n'
+            '  void sendPurchaseConfirmation(Product p);\n'
+            '}',
+        'explicacion':
+            'El caso de uso representa una única operación de negocio: realizar una compra. Puede validar el producto, solicitar su almacenamiento y pedir una notificación porque esos pasos forman parte del mismo flujo. Las dependencias se reciben mediante abstracciones, por lo que se pueden sustituir por otras implementaciones o simulaciones de prueba. En un sistema real también habría que contemplar errores de almacenamiento, fallos al enviar la notificación y la consistencia de la compra. La validación stock > 0 es solo un ejemplo simplificado de las reglas de compra.'
       },
     ],
-
     'Casos de uso (UML)': [
       {
         'titulo': 'Diagrama UML: Registro de usuario',
-        'codigo':
-        'El actor "Usuario" interactúa con el sistema para registrarse.\n'
+        'codigo': 'El actor "Usuario" interactúa con el sistema para registrarse.\n'
             '- Actor: Usuario\n'
             '- Caso de uso principal: Registrar Usuario\n'
             '- Casos incluidos: Validar Email, Guardar Datos\n'
@@ -3926,8 +4320,7 @@ class _ExamplesScreenState extends State<ExamplesScreen> {
       },
       {
         'titulo': 'Diagrama UML: Iniciar sesión',
-        'codigo':
-        'Representa cómo un usuario accede a su cuenta.\n'
+        'codigo': 'Representa cómo un usuario accede a su cuenta.\n'
             '- Actor: Usuario\n'
             '- Caso de uso: Iniciar Sesión\n'
             '- Extiende: Recuperar Contraseña\n'
@@ -3935,8 +4328,7 @@ class _ExamplesScreenState extends State<ExamplesScreen> {
       },
       {
         'titulo': 'Diagrama UML: Procesar Compra',
-        'codigo':
-        'El actor realiza un proceso de compra en un sistema.\n'
+        'codigo': 'El actor realiza un proceso de compra en un sistema.\n'
             '- Actor: Cliente\n'
             '- Caso de uso principal: Comprar Producto\n'
             '- Casos incluidos: Validar Stock, Calcular Total, Procesar Pago\n'
@@ -3944,8 +4336,7 @@ class _ExamplesScreenState extends State<ExamplesScreen> {
       },
       {
         'titulo': 'Diagrama UML: Gestión de productos',
-        'codigo':
-        'Caso de uso para administración del catálogo.\n'
+        'codigo': 'Caso de uso para administración del catálogo.\n'
             '- Actor: Administrador\n'
             '- Casos de uso: Crear Producto, Editar Producto, Eliminar Producto\n'
             '- Extiende: Registrar Cambios (para auditoría).'
@@ -3953,15 +4344,14 @@ class _ExamplesScreenState extends State<ExamplesScreen> {
       {
         'titulo': 'Diagrama UML: Generar Reporte',
         'codigo':
-        'Diagrama que muestra la generación de reportes por parte del sistema.\n'
-            '- Actor: Analista\n'
-            '- Caso de uso principal: Generar Reporte\n'
-            '- Incluye: Obtener Datos, Procesar Información, Exportar Archivo.'
+            'Diagrama que muestra la generación de reportes por parte del sistema.\n'
+                '- Actor: Analista\n'
+                '- Caso de uso principal: Generar Reporte\n'
+                '- Incluye: Obtener Datos, Procesar Información, Exportar Archivo.'
       },
       {
         'titulo': 'Diagrama UML: Notificaciones automáticas',
-        'codigo':
-        'Representa envíos automáticos de mensajes.\n'
+        'codigo': 'Representa envíos automáticos de mensajes.\n'
             '- Actor: Sistema (actor secundario), Usuario\n'
             '- Caso de uso: Enviar Notificación\n'
             '- Incluye: Consultar Preferencias del Usuario.\n'
@@ -3972,128 +4362,121 @@ class _ExamplesScreenState extends State<ExamplesScreen> {
       {
         'titulo': 'Responsabilidad Única',
         'codigo':
-        'Cada clase, función o módulo debe tener solo una responsabilidad clara.\n'
-            'Esto facilita las pruebas, el mantenimiento y reduce el acoplamiento.'
+            'Cada clase, función o módulo debe tener solo una responsabilidad clara.\n'
+                'Esto facilita las pruebas, el mantenimiento y reduce el acoplamiento.'
       },
       {
         'titulo': 'Nombres claros y significativos',
         'codigo':
-        'Usar nombres que expliquen la intención. Un buen nombre evita comentarios innecesarios.\n'
-            'Debe ser fácil entender qué hace algo sin buscar en otros archivos.'
+            'Usar nombres que expliquen la intención. Un buen nombre evita comentarios innecesarios.\n'
+                'Debe ser fácil entender qué hace algo sin buscar en otros archivos.'
       },
       {
         'titulo': 'Evitar duplicación (principio DRY)',
-        'codigo':
-        'Nunca repitas lógica o datos en varias partes del sistema.\n'
+        'codigo': 'Nunca repitas lógica o datos en varias partes del sistema.\n'
             'Extrae funciones o componentes reutilizables para centralizar el comportamiento.'
       },
       {
         'titulo': 'Preferir composición sobre herencia',
         'codigo':
-        'La composición reduce el acoplamiento y permite modificar comportamientos\n'
-            'sin afectar jerarquías enteras. La herencia debe ser el último recurso.'
+            'La composición reduce el acoplamiento y permite modificar comportamientos\n'
+                'sin afectar jerarquías enteras. La herencia debe ser el último recurso.'
       },
       {
         'titulo': 'Validar datos y manejar errores',
-        'codigo':
-        'Toda entrada externa debe validarse antes de procesarse.\n'
+        'codigo': 'Toda entrada externa debe validarse antes de procesarse.\n'
             'Un buen manejo de errores mejora la estabilidad del sistema y la experiencia del usuario.'
       },
       {
         'titulo': 'Escribir código legible antes que código “inteligente”',
         'codigo':
-        'El código debe ser fácil de entender por otros desarrolladores.\n'
-            'Evita trucos o construcciones demasiado sofisticadas que dificulten la lectura.'
+            'El código debe ser fácil de entender por otros desarrolladores.\n'
+                'Evita trucos o construcciones demasiado sofisticadas que dificulten la lectura.'
       },
       {
         'titulo': 'Documentar solo lo necesario',
-        'codigo':
-        'Los comentarios deben explicar el “por qué”, no el “cómo”.\n'
+        'codigo': 'Los comentarios deben explicar el “por qué”, no el “cómo”.\n'
             'Un exceso de documentación es tan malo como la ausencia de la misma.'
       },
       {
         'titulo': 'Mantener funciones cortas',
-        'codigo':
-        'Una función debe hacer una sola cosa y hacerla bien.\n'
+        'codigo': 'Una función debe hacer una sola cosa y hacerla bien.\n'
             'Idealmente, no debería superar 20 líneas para facilitar pruebas y lectura.'
       },
       {
         'titulo': 'Evitar acoplamiento entre capas',
-        'codigo':
-        'Las capas de UI, dominio y datos deben estar bien separadas.\n'
+        'codigo': 'Las capas de UI, dominio y datos deben estar bien separadas.\n'
             'El acoplamiento provoca errores en cascada y hace difícil reemplazar implementaciones.'
       },
       {
         'titulo': 'Escribir pruebas automatizadas',
         'codigo':
-        'Las pruebas permiten detectar errores rápidamente y asegurar que el sistema\n'
-            'se comporta como se espera incluso después de refactorizaciones.'
+            'Las pruebas permiten detectar errores rápidamente y asegurar que el sistema\n'
+                'se comporta como se espera incluso después de refactorizaciones.'
       },
     ],
     'Malas prácticas': [
       {
         'titulo': 'Clases con demasiadas responsabilidades',
         'codigo':
-        'Una clase que hace muchas cosas es difícil de mantener, probar y extender.\n'
-            'Este problema suele generar errores ocultos y obliga a modificar muchas partes del sistema\n'
-            'cuando se requiere un cambio.'
+            'Una clase que hace muchas cosas es difícil de mantener, probar y extender.\n'
+                'Este problema suele generar errores ocultos y obliga a modificar muchas partes del sistema\n'
+                'cuando se requiere un cambio.'
       },
       {
         'titulo': 'Nombres ambiguos o poco descriptivos',
         'codigo':
-        'Usar nombres como data, temp, obj o manager hace que sea difícil entender la intención del código.\n'
-            'Esto aumenta el tiempo de lectura y reduce la claridad general del proyecto.'
+            'Usar nombres como data, temp, obj o manager hace que sea difícil entender la intención del código.\n'
+                'Esto aumenta el tiempo de lectura y reduce la claridad general del proyecto.'
       },
       {
         'titulo': 'Ignorar el manejo de errores',
         'codigo':
-        'No validar los datos de entrada o no manejar situaciones inesperadas provoca fallos en producción.\n'
-            'También dificulta la depuración y puede causar un mal funcionamiento silencioso.'
+            'No validar los datos de entrada o no manejar situaciones inesperadas provoca fallos en producción.\n'
+                'También dificulta la depuración y puede causar un mal funcionamiento silencioso.'
       },
       {
         'titulo': 'Duplicación de lógica',
         'codigo':
-        'Tener la misma lógica en varios lugares aumenta la probabilidad de inconsistencias.\n'
-            'Modificar un comportamiento obliga a buscar y actualizar múltiples ubicaciones.'
+            'Tener la misma lógica en varios lugares aumenta la probabilidad de inconsistencias.\n'
+                'Modificar un comportamiento obliga a buscar y actualizar múltiples ubicaciones.'
       },
       {
         'titulo': 'Funciones demasiado largas',
         'codigo':
-        'Las funciones que hacen muchas cosas resultan difíciles de entender y probar.\n'
-            'Además, tienen mayor probabilidad de contener errores y efectos secundarios ocultos.'
+            'Las funciones que hacen muchas cosas resultan difíciles de entender y probar.\n'
+                'Además, tienen mayor probabilidad de contener errores y efectos secundarios ocultos.'
       },
       {
         'titulo': 'Dependencias innecesarias entre capas',
         'codigo':
-        'Permitir que la UI llame directamente a la base de datos rompe la arquitectura.\n'
-            'Esto hace el sistema rígido y difícil de escalar o modificar.'
+            'Permitir que la UI llame directamente a la base de datos rompe la arquitectura.\n'
+                'Esto hace el sistema rígido y difícil de escalar o modificar.'
       },
       {
         'titulo': 'Comentar en exceso o comentar cosas obvias',
         'codigo':
-        'Los comentarios que explican lo evidente generan ruido visual y no aportan valor.\n'
-            'La sobre-documentación también se vuelve desactualizada rápidamente.'
+            'Los comentarios que explican lo evidente generan ruido visual y no aportan valor.\n'
+                'La sobre-documentación también se vuelve desactualizada rápidamente.'
       },
       {
         'titulo': 'Usar variables globales sin necesidad',
         'codigo':
-        'Las variables globales complican el control de estado y pueden generar efectos secundarios inesperados.\n'
-            'Además, afectan la capacidad de realizar pruebas unitarias.'
+            'Las variables globales complican el control de estado y pueden generar efectos secundarios inesperados.\n'
+                'Además, afectan la capacidad de realizar pruebas unitarias.'
       },
       {
         'titulo': 'Optimizar prematuramente',
         'codigo':
-        'Intentar optimizar antes de entender el problema genera complejidad innecesaria.\n'
-            'La optimización debe hacerse solo cuando hay evidencia real de problemas de rendimiento.'
+            'Intentar optimizar antes de entender el problema genera complejidad innecesaria.\n'
+                'La optimización debe hacerse solo cuando hay evidencia real de problemas de rendimiento.'
       },
       {
         'titulo': 'Falta de pruebas automatizadas',
-        'codigo':
-        'Confiar únicamente en pruebas manuales es riesgoso.\n'
+        'codigo': 'Confiar únicamente en pruebas manuales es riesgoso.\n'
             'Esto incrementa la posibilidad de introducir errores al cambiar o refactorizar.'
       },
     ]
-
   };
 
   @override
@@ -4108,7 +4491,7 @@ class _ExamplesScreenState extends State<ExamplesScreen> {
           bottom: TabBar(
             isScrollable: true,
             tabs: [
-              const Tab(text: 'Diagramas de flujo'),
+              const Tab(text: 'Diagrama uml'),
               ...tabs.map((t) => Tab(text: t)),
             ],
           ),
@@ -4134,7 +4517,6 @@ class _ExamplesScreenState extends State<ExamplesScreen> {
                 },
               ),
             ),
-
             Expanded(
               child: TabBarView(
                 children: [
@@ -4143,8 +4525,9 @@ class _ExamplesScreenState extends State<ExamplesScreen> {
                     padding: const EdgeInsets.all(8),
                     children: [
                       ListTile(
-                        title: const Text('Diagrama de flujo (ejemplo)'),
-                        subtitle: const Text('Visualiza un diagrama fijo ya armado.'),
+                        title: const Text('Diagrama uml (ejemplo)'),
+                        subtitle:
+                            const Text('Visualiza un diagrama fijo ya armado.'),
                         onTap: () {
                           Navigator.push(
                             context,
@@ -4154,7 +4537,8 @@ class _ExamplesScreenState extends State<ExamplesScreen> {
                       ),
                       ListTile(
                         title: const Text('Editor de diagramas de UML'),
-                        subtitle: const Text('Crea y diseña tus propios diagramas.'),
+                        subtitle:
+                            const Text('Crea y diseña tus propios diagramas.'),
                         onTap: () {
                           Navigator.push(
                             context,
@@ -4169,8 +4553,8 @@ class _ExamplesScreenState extends State<ExamplesScreen> {
                   ...tabs.map((category) {
                     final ejemplos = categorizedExamples[category]!
                         .where((e) =>
-                    e['titulo']!.toLowerCase().contains(searchQuery) ||
-                        e['codigo']!.toLowerCase().contains(searchQuery))
+                            e['titulo']!.toLowerCase().contains(searchQuery) ||
+                            e['codigo']!.toLowerCase().contains(searchQuery))
                         .toList();
 
                     if (ejemplos.isEmpty) {
@@ -4199,7 +4583,8 @@ class _ExamplesScreenState extends State<ExamplesScreen> {
                                 const SizedBox(height: 6),
                                 SelectableText(
                                   example['codigo']!,
-                                  style: const TextStyle(fontFamily: 'monospace'),
+                                  style:
+                                      const TextStyle(fontFamily: 'monospace'),
                                 ),
                               ],
                             ),
@@ -4234,7 +4619,11 @@ class _QuizScreenState extends State<QuizScreen> {
     'Nivel 1 – SOLID (SRP)': [
       {
         'pregunta': '¿Qué significa el principio "S" en SOLID?',
-        'opciones': ['Single Responsibility', 'Secure Programming', 'Simple Refactoring'],
+        'opciones': [
+          'Single Responsibility',
+          'Secure Programming',
+          'Simple Refactoring'
+        ],
         'respuesta': 'Single Responsibility'
       },
       {
@@ -4306,7 +4695,11 @@ class _QuizScreenState extends State<QuizScreen> {
       },
       {
         'pregunta': '¿Qué se recomienda evitar?',
-        'opciones': ['Duplicar código', 'Nombrar bien', 'Comentar lo necesario'],
+        'opciones': [
+          'Duplicar código',
+          'Nombrar bien',
+          'Comentar lo necesario'
+        ],
         'respuesta': 'Duplicar código'
       },
     ],
@@ -4323,7 +4716,11 @@ class _QuizScreenState extends State<QuizScreen> {
       },
       {
         'pregunta': 'El ciclo TDD es:',
-        'opciones': ['Red - Green - Refactor', 'Run - Watch - Repeat', 'Test - Deploy - Deliver'],
+        'opciones': [
+          'Red - Green - Refactor',
+          'Run - Watch - Repeat',
+          'Test - Deploy - Deliver'
+        ],
         'respuesta': 'Red - Green - Refactor'
       },
     ],
@@ -4344,7 +4741,8 @@ class _QuizScreenState extends State<QuizScreen> {
     //  PLANIFICACIÓN
     'Nivel 6 – Planificación y gestión': [
       {
-        'pregunta': '¿Por qué es importante definir requisitos antes de desarrollar?',
+        'pregunta':
+            '¿Por qué es importante definir requisitos antes de desarrollar?',
         'opciones': [
           'Para evitar retrabajo y malentendidos',
           'Para escribir más código',
@@ -4386,7 +4784,8 @@ class _QuizScreenState extends State<QuizScreen> {
           'Usa una sola clase para todo',
           'Evita la separación de responsabilidades'
         ],
-        'respuesta': 'Divide el sistema en partes independientes y reutilizables'
+        'respuesta':
+            'Divide el sistema en partes independientes y reutilizables'
       },
       {
         'pregunta': '¿Qué patrón se usa para separar interfaz y lógica?',
@@ -4394,7 +4793,8 @@ class _QuizScreenState extends State<QuizScreen> {
         'respuesta': 'MVC'
       },
       {
-        'pregunta': '¿Qué beneficio tiene un buen diseño de interfaz de usuario?',
+        'pregunta':
+            '¿Qué beneficio tiene un buen diseño de interfaz de usuario?',
         'opciones': [
           'Mejora la experiencia del usuario',
           'Hace el sistema más complejo',
@@ -4572,8 +4972,13 @@ class _QuizScreenState extends State<QuizScreen> {
         'respuesta': 'Separar responsabilidades por capas'
       },
       {
-        'pregunta': '¿Cuál capa debe depender de las demás en Clean Architecture?',
-        'opciones': ['Ninguna, las dependencias van hacia el dominio', 'Infraestructura', 'Presentación'],
+        'pregunta':
+            '¿Cuál capa debe depender de las demás en Clean Architecture?',
+        'opciones': [
+          'Ninguna, las dependencias van hacia el dominio',
+          'Infraestructura',
+          'Presentación'
+        ],
         'respuesta': 'Ninguna, las dependencias van hacia el dominio'
       },
       {
@@ -4664,7 +5069,11 @@ class _QuizScreenState extends State<QuizScreen> {
     'Nivel 15 – Seguridad y buenas prácticas': [
       {
         'pregunta': '¿Qué práctica ayuda a proteger contraseñas?',
-        'opciones': ['Encriptarlas', 'Guardarlas en texto plano', 'Compartirlas en repositorio'],
+        'opciones': [
+          'Encriptarlas',
+          'Guardarlas en texto plano',
+          'Compartirlas en repositorio'
+        ],
         'respuesta': 'Encriptarlas'
       },
       {
@@ -4687,7 +5096,11 @@ class _QuizScreenState extends State<QuizScreen> {
       },
       {
         'pregunta': '¿Qué ayuda a evitar XSS?',
-        'opciones': ['Escapar el contenido HTML', 'Usar nombres largos', 'Desactivar HTTPS'],
+        'opciones': [
+          'Escapar el contenido HTML',
+          'Usar nombres largos',
+          'Desactivar HTTPS'
+        ],
         'respuesta': 'Escapar el contenido HTML'
       },
     ],
@@ -4741,8 +5154,13 @@ class _QuizScreenState extends State<QuizScreen> {
         'respuesta': 'Swagger'
       },
       {
-        'pregunta': '¿Qué tipo de comentario describe el propósito de una función?',
-        'opciones': ['Comentario de documentación', 'Comentario temporal', 'TODO'],
+        'pregunta':
+            '¿Qué tipo de comentario describe el propósito de una función?',
+        'opciones': [
+          'Comentario de documentación',
+          'Comentario temporal',
+          'TODO'
+        ],
         'respuesta': 'Comentario de documentación'
       },
       {
@@ -4796,7 +5214,11 @@ class _QuizScreenState extends State<QuizScreen> {
     'Nivel 19 – DevOps y automatización': [
       {
         'pregunta': '¿Qué une DevOps?',
-        'opciones': ['Desarrollo y operaciones', 'Diseño y marketing', 'QA y soporte'],
+        'opciones': [
+          'Desarrollo y operaciones',
+          'Diseño y marketing',
+          'QA y soporte'
+        ],
         'respuesta': 'Desarrollo y operaciones'
       },
       {
@@ -4837,7 +5259,11 @@ class _QuizScreenState extends State<QuizScreen> {
       },
       {
         'pregunta': '¿Qué ayuda a la escalabilidad horizontal?',
-        'opciones': ['Agregar más servidores', 'Reducir memoria', 'Eliminar logs'],
+        'opciones': [
+          'Agregar más servidores',
+          'Reducir memoria',
+          'Eliminar logs'
+        ],
         'respuesta': 'Agregar más servidores'
       },
       {
@@ -4851,7 +5277,11 @@ class _QuizScreenState extends State<QuizScreen> {
       },
       {
         'pregunta': '¿Qué técnica ayuda a detectar cuellos de botella?',
-        'opciones': ['Monitorización', 'Refactorización aleatoria', 'Logging excesivo'],
+        'opciones': [
+          'Monitorización',
+          'Refactorización aleatoria',
+          'Logging excesivo'
+        ],
         'respuesta': 'Monitorización'
       },
     ],
@@ -4864,7 +5294,8 @@ class _QuizScreenState extends State<QuizScreen> {
           'Las clases deben reescribirse cada vez',
           'Las clases deben tener múltiples responsabilidades'
         ],
-        'respuesta': 'Las clases deben estar abiertas a extensión y cerradas a modificación'
+        'respuesta':
+            'Las clases deben estar abiertas a extensión y cerradas a modificación'
       },
       {
         'pregunta': '¿Cómo se logra cumplir OCP?',
@@ -4891,9 +5322,10 @@ class _QuizScreenState extends State<QuizScreen> {
           'Tener dependencias invertidas',
           'Usar interfaces'
         ],
-        'respuesta': 'Modificar una clase cada vez que aparece un nuevo requisito'
+        'respuesta':
+            'Modificar una clase cada vez que aparece un nuevo requisito'
       }
-   ],
+    ],
     'Nivel 22 – SOLID (LSP)': [
       {
         'pregunta': '¿Qué exige LSP?',
@@ -4992,11 +5424,7 @@ class _QuizScreenState extends State<QuizScreen> {
       },
       {
         'pregunta': '¿Qué patrón ayuda a DIP?',
-        'opciones': [
-          'Inyección de dependencias',
-          'Singleton',
-          'Adapter'
-        ],
+        'opciones': ['Inyección de dependencias', 'Singleton', 'Adapter'],
         'respuesta': 'Inyección de dependencias'
       },
       {
@@ -5012,7 +5440,8 @@ class _QuizScreenState extends State<QuizScreen> {
 
     'Nivel 25 – Versionado Semántico': [
       {
-        'pregunta': '¿Qué significan los números en versionado semántico (MAJOR.MINOR.PATCH)?',
+        'pregunta':
+            '¿Qué significan los números en versionado semántico (MAJOR.MINOR.PATCH)?',
         'opciones': [
           'Cambios incompatibles, nuevas funciones, correcciones',
           'Ramificaciones, merges, conflictos',
@@ -5057,7 +5486,8 @@ class _QuizScreenState extends State<QuizScreen> {
           'Un solo servicio grande',
           'Dependencias fuertes entre módulos'
         ],
-        'respuesta': 'Servicios pequeños, independientes y desplegables por separado'
+        'respuesta':
+            'Servicios pequeños, independientes y desplegables por separado'
       },
       {
         'pregunta': '¿Qué patrón se usa para comunicar microservicios?',
@@ -5079,11 +5509,7 @@ class _QuizScreenState extends State<QuizScreen> {
       },
       {
         'pregunta': '¿Qué herramienta es común en microservicios?',
-        'opciones': [
-          'Kubernetes',
-          'Excel',
-          'PowerPoint'
-        ],
+        'opciones': ['Kubernetes', 'Excel', 'PowerPoint'],
         'respuesta': 'Kubernetes'
       }
     ],
@@ -5157,11 +5583,7 @@ class _QuizScreenState extends State<QuizScreen> {
       },
       {
         'pregunta': '¿Qué evita SQL parametrizado?',
-        'opciones': [
-          'Inyección SQL',
-          'Compilación',
-          'Caching'
-        ],
+        'opciones': ['Inyección SQL', 'Compilación', 'Caching'],
         'respuesta': 'Inyección SQL'
       }
     ],
@@ -5169,29 +5591,17 @@ class _QuizScreenState extends State<QuizScreen> {
     'Nivel 29 – API REST (buenas prácticas)': [
       {
         'pregunta': '¿Qué formato es estándar en APIs REST?',
-        'opciones': [
-          'JSON',
-          'MP3',
-          'PDF'
-        ],
+        'opciones': ['JSON', 'MP3', 'PDF'],
         'respuesta': 'JSON'
       },
       {
         'pregunta': '¿Qué representa el código 201?',
-        'opciones': [
-          'Recurso creado',
-          'Error del servidor',
-          'No autorizado'
-        ],
+        'opciones': ['Recurso creado', 'Error del servidor', 'No autorizado'],
         'respuesta': 'Recurso creado'
       },
       {
         'pregunta': '¿Qué método se usa para obtener datos?',
-        'opciones': [
-          'GET',
-          'POST',
-          'DELETE'
-        ],
+        'opciones': ['GET', 'POST', 'DELETE'],
         'respuesta': 'GET'
       },
       {
@@ -5252,7 +5662,8 @@ class _QuizScreenState extends State<QuizScreen> {
           'Un diagrama de base de datos',
           'Un test automatizado'
         ],
-        'respuesta': 'Una descripción de cómo un usuario interactúa con el sistema'
+        'respuesta':
+            'Una descripción de cómo un usuario interactúa con el sistema'
       },
       {
         'pregunta': '¿Cuál es el objetivo de un caso de uso?',
@@ -5265,11 +5676,7 @@ class _QuizScreenState extends State<QuizScreen> {
       },
       {
         'pregunta': '¿Quién ejecuta un caso de uso?',
-        'opciones': [
-          'Un actor externo',
-          'El servidor',
-          'El sistema operativo'
-        ],
+        'opciones': ['Un actor externo', 'El servidor', 'El sistema operativo'],
         'respuesta': 'Un actor externo'
       },
       {
@@ -5451,11 +5858,7 @@ class _QuizScreenState extends State<QuizScreen> {
       },
       {
         'pregunta': '¿Qué deriva directamente del flujo del caso de uso?',
-        'opciones': [
-          'Historias de usuario',
-          'El diseño UI',
-          'La arquitectura'
-        ],
+        'opciones': ['Historias de usuario', 'El diseño UI', 'La arquitectura'],
         'respuesta': 'Historias de usuario'
       },
       {
@@ -5624,7 +6027,8 @@ class _QuizScreenState extends State<QuizScreen> {
         'respuesta': 'Escenarios de falla'
       },
       {
-        'pregunta': '¿Qué permite un caso de uso bien modelado en sistemas grandes?',
+        'pregunta':
+            '¿Qué permite un caso de uso bien modelado en sistemas grandes?',
         'opciones': [
           'Coordinación entre equipos',
           'Eliminar pruebas',
@@ -5651,18 +6055,14 @@ class _QuizScreenState extends State<QuizScreen> {
     });
   }
 
-
   void _startQuiz(String nivel, int nivelIndex) async {
-    // 🔥 Registrar intento SIEMPRE
+    // Registrar intento (correcto)
     await quizDAO.registerAttempt();
     quizAttempts++;
 
-    // Ver si se desbloquea el minijuego
-    if (quizAttempts >= 10) {
-      await quizDAO.saveProgress(unlockedLevel);
-      setState(() {});
-    }
+    setState(() {}); // solo para actualizar los minijuegos
 
+    // Lanzar quiz
     bool aprobado = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -5673,12 +6073,12 @@ class _QuizScreenState extends State<QuizScreen> {
       ),
     );
 
-    if (aprobado && nivelIndex == unlockedLevel && nivelIndex < quizzes.length - 1) {
-      await quizDAO.saveProgress(unlockedLevel);
-      setState(() => unlockedLevel++);
+    // SI aprueba y está justo en el nivel actual -> desbloquear siguiente
+    if (aprobado && nivelIndex == unlockedLevel) {
+      setState(() => unlockedLevel++); // 1. subir nivel
+      await quizDAO.saveProgress(unlockedLevel); // 2. guardarlo
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -5735,11 +6135,11 @@ class _QuizScreenState extends State<QuizScreen> {
               onTap: quizAttempts < 10
                   ? null
                   : () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => PongGameScreen()),
-                );
-              },
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => PongGameScreen()),
+                      );
+                    },
             ),
           ),
           //  MINIJUEGO RUNNER → 20 INTENTOS
@@ -5764,11 +6164,11 @@ class _QuizScreenState extends State<QuizScreen> {
               onTap: quizAttempts < 20
                   ? null
                   : () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => RunGameScreen()),
-                );
-              },
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => RunGameScreen()),
+                      );
+                    },
             ),
           ),
 
@@ -5794,11 +6194,11 @@ class _QuizScreenState extends State<QuizScreen> {
               onTap: quizAttempts < 30
                   ? null
                   : () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => AvoidBlocksGame()),
-                );
-              },
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => AvoidBlocksGame()),
+                      );
+                    },
             ),
           ),
 
@@ -5823,11 +6223,11 @@ class _QuizScreenState extends State<QuizScreen> {
               onTap: quizAttempts < 40
                   ? null
                   : () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => StarCollectorGame()),
-                );
-              },
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => StarCollectorGame()),
+                      );
+                    },
             ),
           ),
         ],
@@ -5840,7 +6240,10 @@ class LevelQuizScreen extends StatefulWidget {
   final String nivel;
   final List<Map<String, Object>> preguntas;
 
-  LevelQuizScreen({required this.nivel, required this.preguntas});
+  LevelQuizScreen({
+    required this.nivel,
+    required this.preguntas,
+  });
 
   @override
   _LevelQuizScreenState createState() => _LevelQuizScreenState();
@@ -5849,74 +6252,255 @@ class LevelQuizScreen extends StatefulWidget {
 class _LevelQuizScreenState extends State<LevelQuizScreen> {
   int correctas = 0;
   int indexPregunta = 0;
+
   late List<String> opcionesMezcladas;
+
+  String? respuestaSeleccionada;
+  bool respuestaRevelada = false;
+  bool finalizado = false;
+
+  final List<Map<String, dynamic>> respuestasIntento = [];
 
   @override
   void initState() {
     super.initState();
-    _mezclarOpciones();
+
+    if (widget.preguntas.isNotEmpty) {
+      _mezclarOpciones();
+    }
   }
 
   void _mezclarOpciones() {
     opcionesMezcladas = List<String>.from(
-        widget.preguntas[indexPregunta]['opciones'] as List<String>
+      widget.preguntas[indexPregunta]['opciones'] as List<String>,
     );
+
     opcionesMezcladas.shuffle(Random());
   }
 
-  void _responder(String seleccion) {
-    final correcta = widget.preguntas[indexPregunta]['respuesta'] as String;
+  Future<void> _guardarIntento({
+    required bool aprobado,
+  }) async {
+    final preferencias = await SharedPreferences.getInstance();
 
-    if (seleccion == correcta) correctas++;
+    const claveHistorial = 'historial_intentos_quiz';
+
+    final historialExistente = preferencias.getString(claveHistorial);
+
+    List<dynamic> historial = [];
+
+    if (historialExistente != null) {
+      try {
+        historial = jsonDecode(historialExistente) as List<dynamic>;
+      } catch (_) {
+        historial = [];
+      }
+    }
+
+    historial.add({
+      'nivel': widget.nivel,
+      'fecha': DateTime.now().toIso8601String(),
+      'correctas': correctas,
+      'total': widget.preguntas.length,
+      'porcentaje': widget.preguntas.isEmpty
+          ? 0
+          : (correctas * 100 / widget.preguntas.length).round(),
+      'aprobado': aprobado,
+      'respuestas': respuestasIntento,
+    });
+
+    await preferencias.setString(
+      claveHistorial,
+      jsonEncode(historial),
+    );
+  }
+
+  void _responder(String seleccion) {
+    if (respuestaRevelada || finalizado) return;
+
+    final pregunta = widget.preguntas[indexPregunta];
+    final correcta = pregunta['respuesta'] as String;
+    final acierto = seleccion == correcta;
+
+    setState(() {
+      respuestaSeleccionada = seleccion;
+      respuestaRevelada = true;
+
+      if (acierto) {
+        correctas++;
+      }
+
+      respuestasIntento.add({
+        'pregunta': pregunta['pregunta'],
+        'seleccionada': seleccion,
+        'correcta': correcta,
+        'acierto': acierto,
+      });
+    });
+  }
+
+  Future<void> _siguientePregunta() async {
+    if (!respuestaRevelada || finalizado) return;
 
     if (indexPregunta < widget.preguntas.length - 1) {
       setState(() {
         indexPregunta++;
+        respuestaSeleccionada = null;
+        respuestaRevelada = false;
         _mezclarOpciones();
       });
-    } else {
-      bool aprobado = correctas >= (widget.preguntas.length / 2).ceil();
-
-      Navigator.pop(context, aprobado);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            aprobado
-                ? '✅ Aprobaste con $correctas/${widget.preguntas.length}'
-                : '❌ No aprobaste. Intenta de nuevo.',
-          ),
-        ),
-      );
+      return;
     }
+
+    final aprobado = correctas >= (widget.preguntas.length / 2).ceil();
+
+    setState(() {
+      finalizado = true;
+    });
+
+    await _guardarIntento(aprobado: aprobado);
+
+    if (!mounted) return;
+
+    // Conserva el resultado booleano que utiliza la pantalla anterior
+    // para desbloquear el siguiente nivel.
+    Navigator.pop(context, aprobado);
   }
 
   @override
   Widget build(BuildContext context) {
+    if (widget.preguntas.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: Text(widget.nivel)),
+        body: Center(
+          child: Text('Este nivel no tiene preguntas todavía.'),
+        ),
+      );
+    }
+
     final pregunta = widget.preguntas[indexPregunta];
+    final correcta = pregunta['respuesta'] as String;
+    final restantes = widget.preguntas.length - indexPregunta - 1;
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.nivel)),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              pregunta['pregunta'] as String,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 20),
-            ...opcionesMezcladas.map((opcion) {
-              return Container(
-                margin: EdgeInsets.symmetric(vertical: 6),
-                child: ElevatedButton(
-                  onPressed: () => _responder(opcion),
-                  child: Text(opcion),
+      appBar: AppBar(
+        title: Text(widget.nivel),
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Pregunta ${indexPregunta + 1} de '
+                '${widget.preguntas.length}',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
-              );
-            }).toList(),
-          ],
+              ),
+              const SizedBox(height: 6),
+              Text('Faltan $restantes preguntas'),
+              const SizedBox(height: 10),
+              LinearProgressIndicator(
+                value: (indexPregunta + 1) / widget.preguntas.length,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                pregunta['pregunta'] as String,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Expanded(
+                child: ListView(
+                  children: opcionesMezcladas.map((opcion) {
+                    final esCorrecta = opcion == correcta;
+                    final fueSeleccionada = opcion == respuestaSeleccionada;
+
+                    Color? color;
+
+                    if (respuestaRevelada && esCorrecta) {
+                      color = Colors.green.withValues(alpha: 0.18);
+                    } else if (respuestaRevelada &&
+                        fueSeleccionada &&
+                        !esCorrecta) {
+                      color = Colors.red.withValues(alpha: 0.18);
+                    }
+
+                    return Card(
+                      color: color,
+                      child: ListTile(
+                        title: Text(opcion),
+                        trailing: respuestaRevelada && esCorrecta
+                            ? const Icon(
+                                Icons.check_circle,
+                                color: Colors.green,
+                              )
+                            : respuestaRevelada && fueSeleccionada
+                                ? const Icon(
+                                    Icons.cancel,
+                                    color: Colors.red,
+                                  )
+                                : null,
+                        onTap:
+                            respuestaRevelada ? null : () => _responder(opcion),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              if (respuestaRevelada) ...[
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          respuestaSeleccionada == correcta
+                              ? '¡Correcto!'
+                              : 'Respuesta incorrecta',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: respuestaSeleccionada == correcta
+                                ? Colors.green
+                                : Colors.red,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text('Respuesta correcta: $correcta'),
+                        const SizedBox(height: 6),
+                        Text(
+                          respuestaSeleccionada == correcta
+                              ? 'Tu elección coincide con la respuesta '
+                                  'correcta.'
+                              : 'La opción que elegiste no coincide con '
+                                  'la respuesta correcta. Repasa este tema '
+                                  'para reforzarlo.',
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: respuestaRevelada ? _siguientePregunta : null,
+                  child: Text(
+                    indexPregunta == widget.preguntas.length - 1
+                        ? 'Ver resultado'
+                        : 'Siguiente pregunta',
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -5930,7 +6514,6 @@ class PongGameScreen extends StatefulWidget {
 
 class _PongGameScreenState extends State<PongGameScreen>
     with SingleTickerProviderStateMixin {
-
   // --- Variables del juego ---
   double ballX = 0;
   double ballY = 0;
@@ -5940,7 +6523,6 @@ class _PongGameScreenState extends State<PongGameScreen>
   double paddleX = 0;
   double paddleWidth = 0.3;
   double paddleVisualScale = 0.5; // 50% del tamaño real
-
 
   late AnimationController controller;
 
@@ -6031,7 +6613,6 @@ Este juego fue creado usando:
             showMessage = true;
             controller.stop();
           }
-
         } else {
           // Reinicio al perder
           score = 0;
@@ -6089,7 +6670,9 @@ Este juego fue creado usando:
             Align(
               alignment: Alignment(paddleX, 0.95),
               child: Container(
-                width: MediaQuery.of(context).size.width * paddleWidth * paddleVisualScale,
+                width: MediaQuery.of(context).size.width *
+                    paddleWidth *
+                    paddleVisualScale,
                 height: 16,
                 decoration: BoxDecoration(
                   color: Colors.blueAccent,
@@ -6097,7 +6680,6 @@ Este juego fue creado usando:
                 ),
               ),
             ),
-
 
             // Score
             Positioned(
@@ -6135,8 +6717,7 @@ Este juego fue creado usando:
                           textAlign: TextAlign.center,
                         ),
 
-                      if (!isFinalMessage)
-                        const SizedBox(height: 10),
+                      if (!isFinalMessage) const SizedBox(height: 10),
 
                       // CONTENIDO DEL MENSAJE
                       Text(
@@ -6165,7 +6746,6 @@ Este juego fue creado usando:
   }
 }
 
-
 class RunGameScreen extends StatefulWidget {
   @override
   _RunGameScreenState createState() => _RunGameScreenState();
@@ -6173,18 +6753,17 @@ class RunGameScreen extends StatefulWidget {
 
 class _RunGameScreenState extends State<RunGameScreen>
     with SingleTickerProviderStateMixin {
-
   // ──────────────────────────────
   // VARIABLES DEL JUEGO
   // ──────────────────────────────
   int jumpCount = 0;
   final int maxJumps = 2;
 
-  double playerY = 0;         // Posición vertical del jugador
-  double velocity = 0;        // Velocidad de salto
+  double playerY = 0; // Posición vertical del jugador
+  double velocity = 0; // Velocidad de salto
   final double gravity = -0.0010;
 
-  double obstacleX = 1.2;     // Obstáculo entrando desde la derecha
+  double obstacleX = 1.2; // Obstáculo entrando desde la derecha
   double obstacleSpeed = 0.01;
 
   int score = 0;
@@ -6240,7 +6819,6 @@ class _RunGameScreenState extends State<RunGameScreen>
         isJumping = false;
         jumpCount = 0;
       }
-
 
       // Movimiento del obstáculo
       obstacleX -= obstacleSpeed;
@@ -6309,7 +6887,6 @@ Este juego funciona con:
     return xOverlap && yOverlap;
   }
 
-
   void _restartGame() {
     score = 0;
     playerY = 0;
@@ -6322,12 +6899,11 @@ Este juego funciona con:
     if (showMessage) return;
 
     if (jumpCount < maxJumps) {
-      velocity = 0.045;   // fuerza del salto
+      velocity = 0.045; // fuerza del salto
       isJumping = true;
-      jumpCount++;        // ← registra un salto
+      jumpCount++; // ← registra un salto
     }
   }
-
 
   void _closeMessage() {
     setState(() {
@@ -6353,7 +6929,6 @@ Este juego funciona con:
         backgroundColor: Colors.black,
         body: Stack(
           children: [
-
             // Jugador (cuadrado)
             Align(
               alignment: Alignment(-0.7, 1 - playerY),
@@ -6407,10 +6982,7 @@ Este juego funciona con:
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-
-                      if (!isFinalMessage)
-                        const SizedBox(height: 10),
-
+                      if (!isFinalMessage) const SizedBox(height: 10),
                       Text(
                         messageText,
                         textAlign: TextAlign.center,
@@ -6419,9 +6991,7 @@ Este juego funciona con:
                           fontSize: 18,
                         ),
                       ),
-
                       const SizedBox(height: 16),
-
                       ElevatedButton(
                         onPressed: _closeMessage,
                         child: const Text("Cerrar"),
@@ -6437,7 +7007,6 @@ Este juego funciona con:
   }
 }
 
-
 class AvoidBlocksGame extends StatefulWidget {
   @override
   _AvoidBlocksGameState createState() => _AvoidBlocksGameState();
@@ -6445,11 +7014,10 @@ class AvoidBlocksGame extends StatefulWidget {
 
 class _AvoidBlocksGameState extends State<AvoidBlocksGame>
     with SingleTickerProviderStateMixin {
-
   // ─────────────────────────────────────
   // JUGADOR
   // ─────────────────────────────────────
-  double playerX = 0;     // -1 a 1
+  double playerX = 0; // -1 a 1
   final double playerWidth = 0.15;
 
   // ─────────────────────────────────────
@@ -6621,7 +7189,6 @@ Este juego utiliza:
         backgroundColor: Colors.black,
         body: Stack(
           children: [
-
             // Jugador
             Align(
               alignment: Alignment(playerX, 0.9),
@@ -6683,17 +7250,13 @@ Este juego utiliza:
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-
                       SizedBox(height: 10),
-
                       Text(
                         messageText,
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.white, fontSize: 18),
                       ),
-
                       SizedBox(height: 14),
-
                       ElevatedButton(
                         onPressed: _closeMessage,
                         child: Text("Cerrar"),
@@ -6723,7 +7286,6 @@ class Block {
   });
 }
 
-
 class StarCollectorGame extends StatefulWidget {
   @override
   _StarCollectorGameState createState() => _StarCollectorGameState();
@@ -6731,7 +7293,6 @@ class StarCollectorGame extends StatefulWidget {
 
 class _StarCollectorGameState extends State<StarCollectorGame>
     with SingleTickerProviderStateMixin {
-
   // JUGADOR
   double playerX = 0;
   double playerY = 0.7;
@@ -6881,7 +7442,6 @@ Este juego se programó con:
         dy < (playerSize * 0.6 + obj.size * 0.6);
   }
 
-
   // REINICIAR JUEGO
   void _restart() {
     stars.clear();
@@ -6926,7 +7486,6 @@ Este juego se programó con:
         backgroundColor: Colors.black,
         body: Stack(
           children: [
-
             // JUGADOR
             Align(
               alignment: Alignment(playerX, playerY),
@@ -6989,9 +7548,7 @@ Este juego se programó con:
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-
                       SizedBox(height: 10),
-
                       Text(
                         messageText,
                         textAlign: TextAlign.center,
@@ -7000,9 +7557,7 @@ Este juego se programó con:
                           fontSize: 18,
                         ),
                       ),
-
                       SizedBox(height: 14),
-
                       ElevatedButton(
                         onPressed: _closeMessage,
                         child: Text("Cerrar"),

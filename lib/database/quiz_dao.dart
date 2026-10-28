@@ -2,36 +2,44 @@ import 'package:sqflite/sqflite.dart';
 import 'app_database.dart';
 
 class QuizDAO {
-  // Guarda progreso cuando un nivel se aprueba
+
+  // Guarda el nivel desbloqueado actual
   Future<void> saveProgress(int levelIndex) async {
     final db = await AppDatabase.instance.database;
 
     await db.insert(
       'quiz_progress',
-      {'levelIndex': levelIndex, 'completed': 1},
+      {'id': 1, 'levelIndex': levelIndex},
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
-  // Obtiene cuántos niveles están desbloqueados
+  // Devuelve el nivel desbloqueado
   Future<int> getUnlockedLevels() async {
     final db = await AppDatabase.instance.database;
-    final result = await db.query('quiz_progress');
-    return result.length;
+
+    final result = await db.query(
+      'quiz_progress',
+      where: 'id = ?',
+      whereArgs: [1],
+    );
+
+    if (result.isEmpty) return 0;
+
+    return result.first['levelIndex'] as int;
   }
 
-  // Registrar cada intento de quiz (aprobado o no)
+  // Registrar un intento
   Future<void> registerAttempt() async {
     final db = await AppDatabase.instance.database;
 
     await db.insert(
       'quiz_attempts',
       {'timestamp': DateTime.now().millisecondsSinceEpoch},
-      conflictAlgorithm: ConflictAlgorithm.ignore,
     );
   }
 
-  // Obtener cuántos intentos lleva el usuario
+  // Obtener total de intentos
   Future<int> getAttempts() async {
     final db = await AppDatabase.instance.database;
 
@@ -39,5 +47,6 @@ class QuizDAO {
     return result.length;
   }
 }
+
 
 
